@@ -8,6 +8,13 @@ extern VisionAlgMain* visionalgmain;
 
 using namespace cv;
 
+enum DeviceTreeNodeType
+{
+    DeviceTreeNode_ROOT = 1,
+    DeviceTreeNode_Device,
+    DeviceTreeNode_Channel
+};
+
 VisionAlgMain::VisionAlgMain(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::VisionAlgMain)
@@ -15,7 +22,9 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
     ui->setupUi(this);
 
     m_gcurrentuserid = -1;  //当前登录用户
-    m_gcurrentchannelnum = 0;  //当前选择通道
+    m_guseridbackup = m_gcurrentuserid;
+    m_gcurrentchannelnum = 1;  //当前选择通道
+    m_gchannelnumbackup = 1;
     m_gcurrentchannellinkmode = 0x0;  //当前通道链接模式
     m_gmodel = NULL;  //当前的自定义TreeModel数据  重写了QStandardItemModel
     this->InitStyle();  //初始化样式
@@ -26,6 +35,10 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
 
 VisionAlgMain::~VisionAlgMain()
 {
+    if (m_rpstartstopflag == 1)
+    {
+        stopRealPlay();
+    }
     delete ui;
     m_bislogin = FALSE;
     NET_DVR_Cleanup();
@@ -117,7 +130,8 @@ void VisionAlgMain::InitVideo()
     menu->addAction("切换到4画面", this, SLOT(show_video_4()));
     menu->addAction("切换到9画面", this, SLOT(show_video_9()));
     menu->addAction("切换到16画面", this, SLOT(show_video_16()));
-    show_video_1();
+    tempLab = VideoLab[0];
+    show_video_9();
 }
 
 bool VisionAlgMain::eventFilter(QObject *obj, QEvent *event)
@@ -176,6 +190,7 @@ void VisionAlgMain::show_video_1()
     myApp::VideoType = "1";
     video_max = true;
     change_video_1();
+    windowNum = 1;
 }
 
 void VisionAlgMain::change_video_1(int index)
@@ -190,6 +205,8 @@ void VisionAlgMain::show_video_4()
 {
     removelayout();
     video_max = false;
+    myApp::VideoType = "4";
+    windowNum = 4;
     change_video_4();
 }
 
@@ -210,6 +227,8 @@ void VisionAlgMain::show_video_9()
 {
     removelayout();
     video_max = false;
+    myApp::VideoType = "9";
+    windowNum = 9;
     change_video_9(0);
 }
 
@@ -236,6 +255,7 @@ void VisionAlgMain::show_video_16()
     removelayout();
     myApp::VideoType = "16";
     video_max = false;
+    windowNum = 16;
     change_video_16(0);
 }
 
@@ -290,7 +310,7 @@ void VisionAlgMain::on_btnMenu_Min_clicked()
     this->showMinimized();
 }
 
-//登录
+//登录，实际上只是获取了设备和通道信息，获取完成后又注销用户。当双击左侧树结点时，再次登录。应该是考虑资源利用效率的问题
 void VisionAlgMain::on_btnMenu_Login_clicked()
 {
     if(m_bislogin==TRUE)
@@ -486,7 +506,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
     //当前点击的是一台设备，点击设备时播放第一个通道
     else if (m_iposttreelevel == 1)
     {
-        int devicerow = index.row();  //获取设备在左侧树的索引
+        int devicerow = index.row();  //获取设备在左侧树的索引,本项目中只有一台DVR，所以devicerouw=0
         int i=0;
         QList<DeviceData>::iterator it;
         for ( it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end();++it)
@@ -498,9 +518,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
             i++;
         }
 
-        m_gcurrentuserid =(*it).getUsrID();
-
-//        QMessageBox::information(this,tr("treeBeenClicked"),tr("device"));
+        m_gcurrentuserid =(*it).getUsrID();  //获取用户ID
 
         //如果被点击的设备还没有登录
         if (m_gcurrentuserid < 0)
@@ -512,6 +530,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
                 (*it).getUsrName().toLatin1().data(), \
                 (*it).getPasswd().toLatin1().data(), \
                 &(*it).m_deviceinfo);
+
             //登录失败
             if (-1 == i )
             {
@@ -530,14 +549,12 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
         }
         m_gcurrentchannelnum = 0;
         memcpy(&m_gcurrentdeviceinfo, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
-        //preview
-//        //播放视频
-//        if ((m_realplay->m_rpstartstopflag == 1)&&(m_guseridbackup != m_gcurrentuserid))
-//        {
-//            m_realplay->on_pushButton_realplay_clicked();
-//        }
-//        m_realplay->on_pushButton_realplay_clicked();
-
+        //播放视频
+        if(m_rpstartstopflag==1 && m_guseridbackup!=m_gcurrentuserid)
+        {
+            realplay();
+        }
+        realplay();
         //Change the user id of parameters configuring.
         m_guseridbackup = m_gcurrentuserid;
         m_gchannelnumbackup =0;
@@ -598,27 +615,22 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
                 //找到了通道 与上次点击的设备进行比较，处理会不相同
                 if (m_guseridbackup != m_gcurrentuserid)
                 {
-                    //如果在播放状态先关闭之前的预览
-//                    if (m_realplay->m_rpstartstopflag == 1)
-//                    {
-//                        m_realplay->on_pushButton_realplay_clicked();
-//                    }
-//                    m_realplay->on_pushButton_realplay_clicked();
-
+//                    如果在播放状态先关闭之前的预览
+                    if (m_rpstartstopflag == 1)
+                    {
+                        realplay();
+                    }
+                    realplay();
                 }
                 else
                 {
                 //同一台设备的通道被连续点击两次
                     if (m_gchannelnumbackup != (*it_channel).getChannelNum())
                     {
-//                        if ((m_gchannelnumbackup != 0)&&(m_realplay->m_rpstartstopflag ==1))
-//                        {
-//                            m_realplay->on_pushButton_realplay_clicked();
-//                        }
-
+                        realplay();
                     }
 
-//                    m_realplay->on_pushButton_realplay_clicked();
+                    realplay();
 
                 }
 
@@ -633,6 +645,300 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
 
     return;
     }
+}
+
+void VisionAlgMain::realplay()
+{
+    //User must login.
+    if ( m_gcurrentuserid < 0)
+    {
+        QMessageBox::information(this,tr("have no login yet"),tr("not login"));
+        return;
+    }
+
+    //当前处于停止播放阶段，就开启播放功能
+    if (m_rpstartstopflag == 0)
+    {
+        startRealPlay();
+    }
+    else
+    {
+        //当前处于播放中，就停止播放
+        stopRealPlay();
+        //置标记位
+        m_rpstartstopflag = 0;
+    }
+}
+
+void VisionAlgMain::startRealPlay()
+{
+    //上次被点击树节点的节点类型： 2设备树 3设备 4通道
+    int nodetype = 0;
+    //点击设备在qlistdevice中的序列号
+    int devicerow = 0;
+    //设备拥有的通道数
+    int devicesubchannelnum = 0;
+    //点击通道在qlistchannel中的序列号，点击设备时为0 其他大于0
+    int channelrow = 0;
+
+    QModelIndex tmpindex = m_qtreemodelindex;
+
+    while(tmpindex.isValid()==1)
+    {
+        //获得当前有效节点类型
+        nodetype++;
+        tmpindex = tmpindex.parent();
+    }
+    if(nodetype == 2)
+    {
+        //获取设备序列号，并置通道序列号为0
+        devicerow = m_qtreemodelindex.row();
+        channelrow = 0;
+        QModelIndex tmpsubindex = m_qtreemodelindex.child(0, 0);
+        while(tmpsubindex.isValid()==1)
+        {
+            //获取当前设备的通道数
+            devicesubchannelnum++;
+            tmpsubindex = m_qtreemodelindex.child(devicesubchannelnum, 0);
+        }
+        qDebug()<<devicesubchannelnum;
+    }
+    else if(nodetype == 3)
+    {
+        //获取设备和通道序列号
+        devicerow = m_qtreemodelindex.parent().row();
+        channelrow = m_qtreemodelindex.row();
+    }
+    //目前播放的窗口数
+    int realplaytotalnum = windowNum;
+    int returnvalue = 0;
+
+    //树节点为设备，播放所有通道
+    if(nodetype==2)
+    {
+        if(realplaytotalnum >= (devicesubchannelnum+1))
+        {
+            //该设备的所有通道预览都打开
+            for(int i=0; i<devicesubchannelnum;i++)
+            {
+                NET_DVR_CLIENTINFO  tmpclientinfo;
+                tmpclientinfo.hPlayWnd = (HWND)VideoLab[i]->winId();
+                int ret = realPlayEncapseInterface(devicerow, i, &tmpclientinfo);
+                if(ret==1)
+                {
+                    returnvalue = 1;
+                }
+            }
+        }
+        else
+        {
+            //该设备的前realplaytotalnum个通道打开
+            for(int i = 0; i < realplaytotalnum; i++)
+            {
+                NET_DVR_CLIENTINFO tmpclientinfo;
+                tmpclientinfo.hPlayWnd = (HWND)VideoLab[i]->winId();
+                int ret = realPlayEncapseInterface(devicerow, i, &tmpclientinfo);
+                if(ret==1)
+                {
+                    returnvalue = 1;
+                }
+            }
+        }
+        if(returnvalue==1)
+        {
+            m_rpstartstopflag = 1;
+        }
+    }
+    //树节点为通道，仅播放这一路通道
+    if (nodetype == DeviceTreeNode_Channel)
+    {
+        NET_DVR_CLIENTINFO tmpclientinfo;
+        tmpclientinfo.hPlayWnd = (HWND)tempLab->winId();
+
+        int returnvalue = realPlayEncapseInterface(devicerow, channelrow, &tmpclientinfo);
+        if (returnvalue == 1)
+        {
+            m_rpstartstopflag = 1;
+        }
+    }
+}
+
+void VisionAlgMain::stopRealPlay()
+{
+
+}
+
+
+/**  @fn  void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
+ *   @brief data callback funtion
+ *   @param (OUT) LONG lRealHandle
+ *   @param (OUT) DWORD dwDataType
+ *   @param (OUT) BYTE *pBuffer
+ *   @param (OUT) DWORD  dwBufSize
+ *   @param (OUT) void* dwUser
+ *   @return none
+ */
+void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
+{
+    if (dwUser != NULL)
+    {
+        qDebug("Demmo lRealHandle[%d]: Get StreamData! Type[%d], BufSize[%d], pBuffer:%p\n", lRealHandle, dwDataType, dwBufSize, pBuffer);
+    }
+}
+
+/*******************************************************************
+      Function:   RealPlay::realPlayEncapseInterface
+   Description:   播放一路通道的数据
+     Parameter:   (IN)   int devicerow     要播放的设备在qlistdevice中的序列号
+                  (IN)   int channelrow    要播放的通道在某个设备节点下的序号.
+                  (IN)   NET_DVR_CLIENTINFO *clientinfo  Device Infomation
+        Return:   0--成功，-1--失败。
+**********************************************************************/
+int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_DVR_CLIENTINFO *clientinfo)
+{
+    QList<DeviceData>::iterator it;
+    QList<ChannelData>::iterator it_channel;
+    //在设备列表中寻找设备节点
+    int i = 0;
+    for ( it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end(); ++it)
+    {
+        if (i == devicerow)
+        {
+            break;
+        }
+        i++;
+    }
+    //在设备节点下的通道列表中寻找通道节点
+    int j = 0;
+    for ( it_channel= (*it).m_qlistchanneldata.begin();
+        it_channel != (*it).m_qlistchanneldata.end(); ++it_channel)
+    {
+        if (j == channelrow)
+        {
+            break;
+        }
+        j++;
+    }
+
+    //设置预览打开的相关参数
+    clientinfo->lChannel = (*it_channel).getChannelNum();
+    clientinfo->lLinkMode = (*it_channel).getLinkMode();
+    char tmp[128] = {0};
+    sprintf(tmp, "%s", (*it).getMultiCast().toLatin1().data());
+    clientinfo->sMultiCastIP = tmp;
+    //取流显示
+    int realhandle = NET_DVR_RealPlay_V30((*it).getUsrID(), clientinfo, RealDataCallBack,NULL,1);
+    qDebug("Demo---Protocal:%d", clientinfo->lLinkMode);
+    if (realhandle < 0)
+    {
+        QMessageBox::information(this, tr("NET_DVR_RealPlay error"), tr("SDK_LASTERROR=%1").arg(NET_DVR_GetLastError()));
+        return 0;
+    }
+    else
+    {
+        if ((*it_channel).getChannelNum()>32)
+        {
+            NET_DVR_IPPARACFG ipcfg;
+            DWORD Bytesreturned;
+            if (!NET_DVR_GetDVRConfig((*it).getUsrID(), NET_DVR_GET_IPPARACFG,0,
+                &ipcfg, sizeof(NET_DVR_IPPARACFG),&Bytesreturned))
+            {
+                QMessageBox::information(this, tr("NET_DVR_GetDVRConfig"), \
+                    tr("SDK_LAST_ERROR=%1").arg(NET_DVR_GetLastError()));
+
+                return 0;
+            }
+            if (ipcfg.struIPChanInfo[(*it_channel).getChannelNum()-32-1].byEnable == 0)
+            {
+                QMessageBox::information(this,tr("NET_DVR_RealPlay error"), \
+                    tr("该通道不在线，预览失败"));
+
+                return 0;
+            }
+        }
+        //QMessageBox::information(this,tr("realPlayEncapseInterface"),tr("realhandle =%1").arg(realhandle));
+        m_rpuseridbackup = (*it).getUsrID();
+
+        //设置通道预览句柄
+        (*it_channel).setRealhandle(realhandle);
+
+        //备份预览句柄作为其他接口使用
+        m_rpcurrentrealhandle = realhandle;
+        if (clientinfo->lChannel == 1)
+        {
+            m_rpfirstrealhandle = realhandle;
+        }
+
+        //设置设备是否在预览状态标签值
+        (*it).setRealPlayLabel(1);
+
+        //初始为0
+        int nodetype = 0;
+        QModelIndex tmpindex = m_qtreemodelindex;
+        while (tmpindex.isValid() == 1)
+        {
+            nodetype ++ ;
+            tmpindex = tmpindex.parent();
+        }
+
+        QStandardItem *item = NULL;
+        if (nodetype == 2)
+        {
+
+            QModelIndex specialindex = m_qtreemodelindex.child(channelrow,0);
+            item = m_gmodel->itemFromIndex(specialindex);
+            item->setIcon(QIcon(":/image/play.bmp"));
+
+        }
+        else if (nodetype == 3)
+        {
+            QModelIndex  parentindex = m_qtreemodelindex.parent();
+            item = m_gmodel->itemFromIndex(parentindex.child(channelrow,0));
+            item->setIcon(QIcon(":/image/play.bmp"));
+        }
+        return 1;
+    }
+
+}
+
+void VisionAlgMain::stopRealPlayEncapseInterface()
+{//QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("673"));
+    QList<DeviceData>::iterator it;
+    QList<ChannelData>::iterator it_channel;
+    //在设备列表中寻找设备节点
+    int i = 0;
+    for ( it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end(); ++it)
+    {
+        if (m_rpuseridbackup == (*it).getUsrID())
+        {
+        //QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("715 i=%1").arg(i));
+            break;
+        }
+        //QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("718 i=%1").arg(i));
+        i++;
+    }
+//QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("686"));
+    //在设备节点下的通道列表中寻找通道节点
+    int j = 0;
+    for ( it_channel= (*it).m_qlistchanneldata.begin();
+        it_channel != (*it).m_qlistchanneldata.end(); ++it_channel)
+    {
+        if ((*it_channel).getRealhandle()!=-1)
+        {
+//QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("694 j=%1").arg(j));
+            NET_DVR_StopRealPlay((*it_channel).getRealhandle());
+            (*it_channel).setRealhandle(-1);
+
+            QModelIndex tmpindex = m_gmodel->index(0,0).child(i,0).child(j,0);
+            QStandardItem *item = m_gmodel->itemFromIndex(tmpindex);
+            item->setIcon(QIcon(":/images/camera.bmp"));
+
+        }
+        j++;
+    }
+//QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("738"));
+    //修改设备节点的预览状态标记
+    (*it).setRealPlayLabel(0);
 }
 
 //从设备列表中获取设备字符串

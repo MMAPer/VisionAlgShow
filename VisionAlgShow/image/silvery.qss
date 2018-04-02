@@ -1,6 +1,6 @@
 QWidget[objectName="widget_main"]
 {
-    background-color:rgb(173, 202, 232);
+    background-color:#EAEAEA;
 }
 
 QLineEdit[objectName="fileLineEdit"]
