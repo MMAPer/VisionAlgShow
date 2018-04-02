@@ -1,0 +1,28 @@
+#ifndef TREEITEM_H_
+#define TREEITEM_H_
+
+#include <QList>
+#include <QVariant>
+
+class TreeItem
+{
+public:
+    TreeItem(const QList<QVariant> &data, TreeItem *parent = 0);
+    ~TreeItem();
+
+    void appendChild(TreeItem *child);
+    TreeItem *child(int row);
+    int childCount() const;
+    int columnCount() const;
+    QVariant data(int column) const;
+	bool setData(const QVariant &value);
+    int row() const;
+    TreeItem *parent();
+
+private:
+    QList<TreeItem*> childItems;
+    QList<QVariant> itemData;
+    TreeItem *parentItem;
+};
+#endif /* TREEITEM_H_ */
+

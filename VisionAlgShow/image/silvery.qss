@@ -1,0 +1,74 @@
+QWidget[objectName="widget_main"]
+{
+    background-color:rgb(173, 202, 232);
+}
+
+QLineEdit[objectName="fileLineEdit"]
+{
+    background-color:rgb(255, 255, 255);
+}
+
+QPushButton:enabled
+{
+    background:rgb(120, 170, 220);
+}
+
+QTreeView
+{
+    show-decoration-selected: 1;
+}
+
+QTreeView#DVRsets_treeView
+{
+    background-color:rgb(255, 255, 255);
+}
+
+QTreeView#DVRsets_treeView::item:hover,QTreeView#DVRsets_treeView::branch:hover
+{
+    background-color:rgba(213, 218, 222, 40);
+}
+
+QTreeView#DVRsets_treeView::item:selected,QTreeView#DVRsets_treeView::branch:selected
+{
+    background-color:rgb(0, 160, 230);
+}
+
+QTreeView::branch:has-siblings:!adjoins-item
+{
+    background-color:rgba(213, 218, 222, 40);
+}
+
+
+QLabel#labVideo1,#labVideo2,#labVideo3,#labVideo4,#labVideo5,#labVideo6,#labVideo7,#labVideo8,
+#labVideo9,#labVideo10,#labVideo11,#labVideo12,#labVideo13,#labVideo14,#labVideo15,#labVideo16
+{
+    background-color:rgb(213, 218, 222);
+    border: 1px solid gray;
+}
+
+QLabel#labVideo1:focus,#labVideo2:focus,#labVideo3:focus,#labVideo4:focus,#labVideo5:focus,#labVideo6:focus,
+#labVideo7:focus,#labVideo8:focus,#labVideo9:focus,#labVideo10:focus,#labVideo11:focus,#labVideo12:focus,
+#labVideo13:focus,#labVideo14:focus,#labVideo15:focus,#labVideo16:focus
+{
+    background-color:rgb(234, 235, 237);
+    border: 1px solid red;
+}
+
+QMenu
+{
+    background-color:rgb(255, 255, 255);
+    color:rgb(0,0,0);
+}
+
+QMenu::item
+{
+    background-color:transparent;
+    padding:8px 32px;
+    margin:0px 8px;
+    border-bottom: 1px solid #DBDBDB;
+}
+
+QMenu::item:hover
+{
+    border-bottom: #2dabf9;
+}

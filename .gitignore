@@ -1,0 +1,5 @@
+build*/
+detection
+videos
+*.pro
+*.pro.*
