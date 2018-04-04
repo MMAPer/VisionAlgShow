@@ -17,6 +17,9 @@
 #include <opencv2/highgui.hpp>
 using namespace cv;
 using namespace dnn;
+using namespace std;
+using namespace cv::dnn;
+
 offline::offline(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::offline)
@@ -193,4 +196,131 @@ void offline::on_btn_faster_rcnn_clicked()
         }
         image=offline::Mat2QImage(img);
         ui->label_play->setPixmap(QPixmap::fromImage(image));
+}
+
+void offline::on_btn_ssd_clicked()
+{
+    const char* classNames[] = {"background",
+                                "aeroplane", "bicycle", "bird", "boat",
+                                "bottle", "bus", "car", "cat", "chair",
+                                "cow", "diningtable", "dog", "horse",
+                                "motorbike", "person", "pottedplant",
+                                "sheep", "sofa", "train", "tvmonitor"};
+
+    static const int kInpWidth = 960;
+    static const int kInpHeight = 576;
+
+    String modelConfiguration = "../../detection/ssd/deploy.prototxt";
+    String modelBinary = "../../detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
+    String filePath = "../../detection/ssd/rgb.jpg";
+    int cameraDevice = 0;
+    float min_confidence = 0.5;
+    //! [Initialize network]
+    dnn::Net net = readNetFromCaffe(modelConfiguration, modelBinary);
+    //! [Initialize network]
+
+    if (net.empty())
+    {
+        cerr << "Can't load network by using the following files: " << endl;
+        cerr << "prototxt:   " << modelConfiguration << endl;
+        cerr << "caffemodel: " << modelBinary << endl;
+        cerr << "Models can be downloaded here:" << endl;
+        cerr << "https://github.com/weiliu89/caffe/tree/ssd#models" << endl;
+        exit(-1);
+    }
+
+    VideoCapture cap;
+    if (filePath.empty())
+    {
+        //int cameraDevice = parser.get<int>("camera_device");
+        cap = VideoCapture(cameraDevice);
+        if(!cap.isOpened())
+        {
+            cout << "Couldn't find camera: " << cameraDevice << endl;
+            //return -1;
+        }
+    }
+    else
+    {
+        cap.open(filePath);
+        if(!cap.isOpened())
+        {
+            cout << "Couldn't open image or video: " << filePath << endl;
+            //return -1;
+        }
+    }
+
+    for (;;)
+    {
+        cv::Mat frame;
+        cap >> frame; // get a new frame from camera/video or read image
+        if (frame.empty())
+        {
+            waitKey();
+            break;
+        }
+
+        if (frame.channels() == 4)
+            cvtColor(frame, frame, COLOR_BGRA2BGR);
+
+        //! [Prepare blob]
+        Mat inputBlob = blobFromImage(frame, 1.0f, Size(300, 300), Scalar(104, 117, 123), false, false); //Convert Mat to batch of images
+        //! [Prepare blob]
+
+        //! [Set input blob]
+        net.setInput(inputBlob, "data"); //set the network input
+        //! [Set input blob]
+
+        //! [Make forward pass]
+        Mat detection = net.forward("detection_out"); //compute output
+        //! [Make forward pass]
+
+        vector<double> layersTimings;
+        double freq = getTickFrequency() / 1000;
+        double time = net.getPerfProfile(layersTimings) / freq;
+        ostringstream ss;
+        ss << "FPS: " << 1000/time << " ; time: " << time << " ms";
+        putText(frame, ss.str(), Point(20,20), 0, 0.5, Scalar(0,0,255));
+
+        Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+
+        float confidenceThreshold = min_confidence;
+        for(int i = 0; i < detectionMat.rows; i++)
+        {
+            float confidence = detectionMat.at<float>(i, 2);
+
+            if(confidence > confidenceThreshold)
+            {
+                size_t objectClass = (size_t)(detectionMat.at<float>(i, 1));
+
+                int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
+                int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
+                int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
+                int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
+
+                ss.str("");
+                ss << confidence;
+                String conf(ss.str());
+
+                Rect object(xLeftBottom, yLeftBottom,
+                            xRightTop - xLeftBottom,
+                            yRightTop - yLeftBottom);
+
+                rectangle(frame, object, Scalar(0, 255, 0));
+                String label = String(classNames[objectClass]) + ": " + conf;
+                int baseLine = 0;
+                Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+                rectangle(frame, Rect(Point(xLeftBottom, yLeftBottom - labelSize.height),
+                                      Size(labelSize.width, labelSize.height + baseLine)),
+                          Scalar(255, 255, 255), FILLED);
+                putText(frame, label, Point(xLeftBottom, yLeftBottom),
+                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+            }
+        }
+
+        cv::resize(frame, frame, Size(kInpWidth, kInpHeight));
+        image=offline::Mat2QImage(frame);
+        ui->label_play->setPixmap(QPixmap::fromImage(image));
+    }
+
 }

@@ -50,6 +50,8 @@ private slots:
     void playbyframe();
     void on_btn_faster_rcnn_clicked();
 
+    void on_btn_ssd_clicked();
+
 signals:
     void backmain();
 private:
