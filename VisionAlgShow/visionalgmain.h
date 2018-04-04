@@ -45,18 +45,26 @@ public:
 
     int m_gsdkinit;  //sdk是否初始化标志
     int m_bislogin = FALSE;  //是否登录
+
     int m_iposttreelevel;  //点击的树节点的层级
 
     TreeModel *m_gmodel;  //自定义数据类型
     QModelIndex m_qtreemodelindex;  //树点击的索引
     QList<DeviceData> m_qlistdevicedata;  //DeviceData链表
+
     int m_gcurrentuserid;  //当前登录的用户ID
     int m_guseridbackup;  //用户ID备份
-    NET_DVR_DEVICEINFO_V30 m_gcurrentdeviceinfo;  //海康官方返回的设备信息，注意设备和通道的区别
+    NET_DVR_DEVICEINFO_V30 m_gcurrentdeviceinfo;  //当前设备信息
     int m_gcurrentchannelnum;  //当前通道
     int m_gchannelnumbackup;  //当前通道备份，用于作比较的
     int m_gcurrentchannellinkmode;  //通道链接模式
+
     int m_rpwindownumindex;  //窗口数量选择按钮的索引
+    //实时播放控制
+    int m_rpstartstopflag;  //停止播放为0，开始播放为1
+    int m_rpuseridbackup;  //实时userid备份
+    int m_rpfirstrealhandle;  //第一次播放窗口句柄
+    int m_rpcurrentrealhandle;  //当前播放窗口句柄
 
 
 private slots:
@@ -103,17 +111,19 @@ private:
     void change_video_9(int index=0);  //改变9画面布局
     void change_video_16(int index=0);  //改变16画面布局
 
+    void realplay();  //双击树结点执行的函数
+    void startRealPlay();  //开始实时播放
+    void stopRealPlay();  //停止实时播放
+    int realPlayEncapseInterface(int devicerow, int channelrow, NET_DVR_CLIENTINFO *clientinfo);
+    void stopRealPlayEncapseInterface();
+
     bool video_max;
+    int windowNum;  //窗口数
     QMenu *menu;  //鼠标右键菜单对象
     QLabel *tempLab;  //临时播放视频的标签
     QList<QLabel *> VideoLab;  //通道显示视频lab载体
     QList<QLayout *>VideoLay;  //通道视频所在lab的layout
 
-    QMenu* menu_window_num;
-    QAction* m_one;
-    QAction* m_four;
-    QAction* m_nine;
-    QAction* m_sixteen;
 };
 
 #endif // VISIONALGMAIN_H

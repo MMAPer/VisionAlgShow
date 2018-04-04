@@ -196,22 +196,22 @@ void RealPlay::stopRealPlay()
 }
 
 
-/**  @fn  void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
- *   @brief data callback funtion
- *   @param (OUT) LONG lRealHandle
- *   @param (OUT) DWORD dwDataType
- *   @param (OUT) BYTE *pBuffer
- *   @param (OUT) DWORD  dwBufSize
- *   @param (OUT) void* dwUser
- *   @return none
- */
-void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
-{
-    if (dwUser != NULL)
-    {
-        qDebug("Demmo lRealHandle[%d]: Get StreamData! Type[%d], BufSize[%d], pBuffer:%p\n", lRealHandle, dwDataType, dwBufSize, pBuffer);
-    }
-}
+///**  @fn  void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
+// *   @brief data callback funtion
+// *   @param (OUT) LONG lRealHandle
+// *   @param (OUT) DWORD dwDataType
+// *   @param (OUT) BYTE *pBuffer
+// *   @param (OUT) DWORD  dwBufSize
+// *   @param (OUT) void* dwUser
+// *   @return none
+// */
+//void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
+//{
+//    if (dwUser != NULL)
+//    {
+//        qDebug("Demmo lRealHandle[%d]: Get StreamData! Type[%d], BufSize[%d], pBuffer:%p\n", lRealHandle, dwDataType, dwBufSize, pBuffer);
+//    }
+//}
 
 /*******************************************************************
       Function:   RealPlay::realPlayEncapseInterface
@@ -254,7 +254,8 @@ int RealPlay::realPlayEncapseInterface(int devicerow, int channelrow, NET_DVR_CL
     sprintf(tmp, "%s", (*it).getMultiCast().toLatin1().data());
     clientinfo->sMultiCastIP = tmp;
     //取流显示
-    int realhandle = NET_DVR_RealPlay_V30((*it).getUsrID(), clientinfo, RealDataCallBack,NULL,1);
+//    int realhandle = NET_DVR_RealPlay_V30((*it).getUsrID(), clientinfo, VisionAlgMain::RealDataCallBack,NULL,1);
+    int realhandle = 1;
     qDebug("Demo---Protocal:%d", clientinfo->lLinkMode);
     if (realhandle < 0)
     {
