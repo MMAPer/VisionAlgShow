@@ -15,6 +15,8 @@
 #include <opencv2/dnn/all_layers.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/dnn/shape_utils.hpp>
+#include <iostream>
 using namespace cv;
 using namespace dnn;
 using namespace std;
@@ -24,6 +26,7 @@ offline::offline(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::offline)
 {
+
     ui->setupUi(this);
     this->InitStyle();  //初始化样式
 
@@ -48,7 +51,7 @@ void offline::InitStyle()
     ui->label_title->setText("离线处理");
     this->setWindowTitle("离线处理");
     ui->widge_title->setStyleSheet("background-color:#78b4e3;");
-    ui->label_play->setStyleSheet("border: 1px solid #000000;");
+    //ui->label_play->setStyleSheet("border: 1px solid #000000;");
 
 }
 
@@ -66,25 +69,48 @@ void offline::on_btn_back_clicked()
 //open file
 void offline::on_btn_open_clicked()
 {
-    if (capture.isOpened())
-            capture.release();     //decide if capture is already opened; if so,close it
-        QString filename =QFileDialog::getOpenFileName(this,tr("Open Video File"),".",tr("Video Files(*.avi *.mp4 *.flv *.mkv)"));
-        capture.open(filename.toLocal8Bit().data());
-        if (capture.isOpened())
-        {
-            rate= capture.get(CV_CAP_PROP_FPS);
-            capture >> frame;
-            if (!frame.empty())
-            {
 
-                image = Mat2QImage(frame);
-                ui->label_play->setPixmap(QPixmap::fromImage(image));
-                timer = new QTimer(this);
-                timer->setInterval(1000/rate);   //set timer match with FPS
-                connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
-                timer->start();
+
+    if (capture.isOpened())
+        capture.release();     //decide if capture is already opened; if so,close it
+        fileName =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
+        ui->text_dir->setText(fileName);
+        QFileInfo fileinfo=QFileInfo(fileName);
+        fileSuffix=fileinfo.suffix();
+        //ui->text_dir->setText(fileSuffix);
+        if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" ){
+            videoFlag = 0;
+            //static const int kInpWidth = 960;
+            //static const int kInpHeight = 576;
+            cv::Mat image = cv::imread(fileName.toLatin1().data());
+           // cv::resize(image, image, Size(kInpWidth, kInpHeight));
+            QImage img = offline::Mat2QImage(image);
+            ui->label_play->setPixmap(QPixmap::fromImage(img));
+            ui->label_play->setAlignment(Qt::AlignCenter);
+            //ui->label_play->setAlignment(Qt::AlignVCenter);
+
+        }
+        else{
+            videoFlag=1;
+            capture.open(fileName.toLocal8Bit().data());
+            if (capture.isOpened())
+            {
+                rate= capture.get(CV_CAP_PROP_FPS);
+                capture >> frame;
+                if (!frame.empty())
+                {
+                    image = Mat2QImage(frame);
+                    ui->label_play->setPixmap(QPixmap::fromImage(image));
+                    ui->label_play->setAlignment(Qt::AlignCenter);
+                    timer = new QTimer(this);
+                    timer->setInterval(1000/rate);   //set timer match with FPS
+                    connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
+                    timer->start();
+
+                }
             }
         }
+
 }
 
 //auto play by frame
@@ -144,12 +170,17 @@ void offline::on_btn_faster_rcnn_clicked()
         "sheep", "sofa", "train", "tvmonitor"
     };
 
-    static const int kInpWidth = 960;
-    static const int kInpHeight = 576;
 
+
+    if(fileName == NULL)
+        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空,请打开一张图片"));
+    else if(videoFlag == 1){
+        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为视频文件,请打开一张图片"));
+    }
+    else{
         String protoPath = "../../detection/faster_rcnn/faster_rcnn_vgg16.prototxt";
         String modelPath = "../../detection/faster_rcnn/VGG16_faster_rcnn_final.caffemodel";
-        String imagePath = "../../detection/faster_rcnn/test.jpg";
+        String imagePath = fileName.toStdString();
         float confThreshold = 0.8;
         CV_Assert(!protoPath.empty(), !modelPath.empty(), !imagePath.empty());
 
@@ -157,7 +188,6 @@ void offline::on_btn_faster_rcnn_clicked()
         Net net = readNetFromCaffe(protoPath, modelPath);
 
         Mat img = imread(imagePath);
-        cv::resize(img, img, Size(kInpWidth, kInpHeight));
         Mat blob = blobFromImage(img, 1.0, Size(), Scalar(102.9801, 115.9465, 122.7717), false, false);
         Mat imInfo = (Mat_<float>(1, 3) << img.rows, img.cols, 1.6f);
 
@@ -196,6 +226,10 @@ void offline::on_btn_faster_rcnn_clicked()
         }
         image=offline::Mat2QImage(img);
         ui->label_play->setPixmap(QPixmap::fromImage(image));
+       // ui->label_play->setAlignment(Qt::AlignHCenter);
+        //ui->label_play->setAlignment(Qt::AlignVCenter);
+
+    }
 }
 
 void offline::on_btn_ssd_clicked()
@@ -207,12 +241,12 @@ void offline::on_btn_ssd_clicked()
                                 "motorbike", "person", "pottedplant",
                                 "sheep", "sofa", "train", "tvmonitor"};
 
-    static const int kInpWidth = 960;
-    static const int kInpHeight = 576;
+
 
     String modelConfiguration = "../../detection/ssd/deploy.prototxt";
     String modelBinary = "../../detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
-    String filePath = "../../detection/ssd/rgb.jpg";
+    //String filePath = "../../videos/1026.mp4";
+    String filePath = fileName.toStdString();
     int cameraDevice = 0;
     float min_confidence = 0.5;
     //! [Initialize network]
@@ -262,6 +296,7 @@ void offline::on_btn_ssd_clicked()
 
         if (frame.channels() == 4)
             cvtColor(frame, frame, COLOR_BGRA2BGR);
+
 
         //! [Prepare blob]
         Mat inputBlob = blobFromImage(frame, 1.0f, Size(300, 300), Scalar(104, 117, 123), false, false); //Convert Mat to batch of images
@@ -318,9 +353,12 @@ void offline::on_btn_ssd_clicked()
             }
         }
 
-        cv::resize(frame, frame, Size(kInpWidth, kInpHeight));
+        //imshow("detections", frame);
+        //cv::resize(frame, frame, Size(kInpWidth, kInpHeight));
         image=offline::Mat2QImage(frame);
         ui->label_play->setPixmap(QPixmap::fromImage(image));
+        ui->label_play->setAlignment(Qt::AlignCenter);
+
     }
 
 }

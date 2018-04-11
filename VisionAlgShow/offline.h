@@ -39,6 +39,9 @@ public:
     int m_gchannelnumbackup;  //当前通道备份，用于作比较的
     int m_gcurrentchannellinkmode;  //通道链接模式
     int m_rpwindownumindex;  //窗口数量选择按钮的索引
+    int videoFlag=0;
+    QString fileName;
+    QString fileSuffix;
 
 
 private slots:
