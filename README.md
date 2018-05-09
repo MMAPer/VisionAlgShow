@@ -1,11 +1,14 @@
 ## 开发环境
 Ubuntu16.04
+
 QT5.8.0
+
 OpenCV3.4.1
 
 #### QT5.8.0下载与安装
 [下载页面][1]
-[1]: http://download.qt.io/archive/qt/5.8/5.8.0/ "下载页面"
+[1]:http://download.qt.io/archive/qt/5.8/5.8.0/ 
+
 选择 qt-opensource-linux-x64-5.8.0.run
 ```
 sudo ./qt-opensource-linux-x64-5.8.0.run
@@ -41,4 +44,4 @@ sudo make install
 sudo sh -c 'echo "/usr/local/opencv3.4.1/lib" >> /etc/ld.so.conf.d/opencv.conf'
 sudo ldconfig
 ```
-其中opencv_contrib在编译的时候有些module在编译的时候需要下载的文件无法下载（可能是链接失效），可以删除在modules文件夹内删除不需要的module
+其中opencv_contrib在编译的时候有些module在编译的时候需要下载的文件无法下载（可能是链接失效），可以在modules文件夹内删除不需要的module。
