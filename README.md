@@ -7,6 +7,7 @@
 
 #### QT5.8.0下载与安装
 - 下载：
+
 进入[下载页面](http://download.qt.io/archive/qt/5.8/5.8.0/)，选择 qt-opensource-linux-x64-5.8.0.run
 
 - 安装：
