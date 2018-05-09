@@ -1,15 +1,15 @@
 ## 开发环境
-Ubuntu16.04
+* Ubuntu16.04
 
-QT5.8.0
+* QT5.8.0
 
-OpenCV3.4.1
+* OpenCV3.4.1
 
 #### QT5.8.0下载与安装
-[下载页面][1]
-[1]:http://download.qt.io/archive/qt/5.8/5.8.0/ 
+- 下载：
+进入[下载页面](http://download.qt.io/archive/qt/5.8/5.8.0/)，选择 qt-opensource-linux-x64-5.8.0.run
 
-选择 qt-opensource-linux-x64-5.8.0.run
+- 安装：
 ```
 sudo ./qt-opensource-linux-x64-5.8.0.run
 ```
