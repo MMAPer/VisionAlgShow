@@ -5,6 +5,7 @@
 #include "Public.h"
 #include <QDialog>
 #include <QList>
+#include <QComboBox>
 #include <QModelIndex>
 #include "devicedata.h"
 #include "channeldata.h"
@@ -47,6 +48,7 @@ public:
 private slots:
     void receiveofflinehandle();
     void InitStyle();
+    void InitEvent();
 
     void on_btn_back_clicked();
     void on_btn_open_clicked();
@@ -74,6 +76,11 @@ private:
     QTimer *timer;
     double rate; //FPS
     cv::VideoWriter writer;   //make a video record
+
+    QComboBox *cbox_bg;  //背景建模下拉按钮
+    QComboBox *cbox_od;  //目标检测下拉按钮
+    QComboBox *cbox_sot;  //单目标跟踪下拉按钮
+    QComboBox *cbox_sm;  //衣物解析下拉按钮
 
 };
 

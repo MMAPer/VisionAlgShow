@@ -31,6 +31,7 @@ offline::offline(QWidget *parent) :
 
     ui->setupUi(this);
     this->InitStyle();  //初始化样式
+    this->InitEvent();  //事件信号与槽绑定
 
 }
 
@@ -50,11 +51,21 @@ void offline::InitStyle()
 
     IconHelper::Instance()->SetIcon(ui->label_ico, QChar(0xf03d), 11);
 
-    ui->label_title->setText("离线处理");
-    this->setWindowTitle("离线处理");
-    ui->widge_title->setStyleSheet("background-color:#78b4e3;");
+    ui->label_title->setText("本地视频文件处理");
+    this->setWindowTitle("本地视频文件处理");
+    cbox_od = ui->cbox_od;
+    cbox_od->addItem(tr("HOG+SVM"));
+    cbox_od->addItem(tr("DPM"));
+    cbox_od->addItem(tr("Faster R-CNN"));
+    cbox_od->addItem(tr("YOLO"));
+    cbox_od->addItem(tr("SSD"));
     //ui->label_play->setStyleSheet("border: 1px solid #000000;");
 
+}
+
+void offline::InitEvent()
+{
+    connect(cbox_od, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(on_btn_ssd_clicked()));
 }
 
 void offline::receiveofflinehandle(){
