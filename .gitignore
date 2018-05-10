@@ -1,5 +1,6 @@
 build*/
 detection
 videos
+images
 *.pro.user
 *.pro.user.*

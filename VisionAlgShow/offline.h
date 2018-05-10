@@ -55,6 +55,12 @@ private slots:
 
     void on_btn_ssd_clicked();
 
+    void on_btn_hog_clicked();
+
+    void on_btn_yolo_clicked();
+
+    void on_btn_dpm_clicked();
+
 signals:
     void backmain();
 private:

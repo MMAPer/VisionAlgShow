@@ -16,11 +16,13 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn/shape_utils.hpp>
+#include <opencv2/dpm.hpp>
 #include <iostream>
 using namespace cv;
 using namespace dnn;
 using namespace std;
 using namespace cv::dnn;
+using namespace cv::dpm;
 
 offline::offline(QWidget *parent) :
     QDialog(parent),
@@ -71,8 +73,10 @@ void offline::on_btn_open_clicked()
 {
 
 
-    if (capture.isOpened())
+    if (capture.isOpened()){
         capture.release();     //decide if capture is already opened; if so,close it
+        fileName = "";
+    }
         fileName =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
         ui->text_dir->setText(fileName);
         QFileInfo fileinfo=QFileInfo(fileName);
@@ -245,8 +249,8 @@ void offline::on_btn_ssd_clicked()
 
     String modelConfiguration = "../../detection/ssd/deploy.prototxt";
     String modelBinary = "../../detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
-    //String filePath = "../../videos/1026.mp4";
-    String filePath = fileName.toStdString();
+    String filePath = "../../videos/original.mp4";
+    //String filePath = fileName.toStdString();
     int cameraDevice = 0;
     float min_confidence = 0.5;
     //! [Initialize network]
@@ -255,12 +259,7 @@ void offline::on_btn_ssd_clicked()
 
     if (net.empty())
     {
-        cerr << "Can't load network by using the following files: " << endl;
-        cerr << "prototxt:   " << modelConfiguration << endl;
-        cerr << "caffemodel: " << modelBinary << endl;
-        cerr << "Models can be downloaded here:" << endl;
-        cerr << "https://github.com/weiliu89/caffe/tree/ssd#models" << endl;
-        exit(-1);
+        QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
     }
 
     VideoCapture cap;
@@ -353,12 +352,235 @@ void offline::on_btn_ssd_clicked()
             }
         }
 
-        //imshow("detections", frame);
+        imshow("detections", frame);
+        if (waitKey(1) >= 0) break;
         //cv::resize(frame, frame, Size(kInpWidth, kInpHeight));
-        image=offline::Mat2QImage(frame);
-        ui->label_play->setPixmap(QPixmap::fromImage(image));
-        ui->label_play->setAlignment(Qt::AlignCenter);
+        //image=offline::Mat2QImage(frame);
+        //ui->label_play->setPixmap(QPixmap::fromImage(image));
+        //ui->label_play->setAlignment(Qt::AlignCenter);
 
     }
 
 }
+
+void offline::on_btn_hog_clicked()
+{
+    String file = fileName.toStdString();
+    cv::Mat image = cv::imread(file);
+    if (image.empty())
+    {
+        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空,请打开一张图片"));
+    }
+    else{
+    //【1】定义hog描述符
+    cv::HOGDescriptor hog;
+    //【2】设置SVM分类器
+    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+    //【3】在测试图像上检测行人区域
+    std::vector<cv::Rect> regions;
+    hog.detectMultiScale(image, regions, 0, cv::Size(8, 8), cv::Size(32, 32), 1.05, 1);
+
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        cv::rectangle(image, regions[i], cv::Scalar(0, 0, 255), 2);
+    }
+    //cv::imshow("行人检测", image);
+    QImage img=offline::Mat2QImage(image);
+    ui->label_play->setPixmap(QPixmap::fromImage(img));
+    ui->label_play->setAlignment(Qt::AlignCenter);
+
+    }
+
+}
+
+void offline::on_btn_yolo_clicked()
+{
+    String modelConfiguration = "/home/hbc/dev/projects/VisionAlgShow/detection/yolo/yolov2.cfg";
+    String modelBinary = "/home/hbc/dev/projects/VisionAlgShow/detection/yolo/yolov2.weights";
+    String class_names ="/home/hbc/dev/projects/VisionAlgShow/detection/yolo/coco.names";
+    String source = fileName.toStdString();
+    String  out = "/home/hbc/dev/projects/VisionAlgShow/images/output.jpg";
+    String object_roi_style = "box";   // box or line style draw
+    int cameraDevice = 0;
+    double fps = 3;
+    float confidenceThreshold = 0.24;
+
+    //! [Initialize network]
+    dnn::Net net = readNetFromDarknet(modelConfiguration, modelBinary);
+    //! [Initialize network]
+
+    if (net.empty())
+    {
+        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
+
+    }
+
+    VideoCapture cap;
+    VideoWriter writer;
+    int codec = CV_FOURCC('M', 'J', 'P', 'G');
+
+    if (source.empty())
+    {
+
+        cap = VideoCapture(cameraDevice);
+        if(!cap.isOpened())
+        {
+           QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法打开camera 0"));
+           //QMessageBox::information(this, QString::fromLocal8Bit("错误")),QString::fromLocal8Bit("无法打开camera 0"));
+        }
+    }
+    else
+    {
+
+        cap.open(source);
+        if(!cap.isOpened())
+        {
+           QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法打开当前路径文件"));
+           //QMessageBox::information(this,QString::fromLocal8Bit("错误")),QString::fromLocal8Bit("无法打开当前路径文件"));
+    }
+
+    if(out.empty())
+    {
+        writer.open(out, codec, fps, Size((int)cap.get(CAP_PROP_FRAME_WIDTH),(int)cap.get(CAP_PROP_FRAME_HEIGHT)), 1);
+    }
+
+    vector<String> classNamesVec;
+
+    ifstream classNamesFile(class_names.c_str());
+    if (classNamesFile.is_open())
+    {
+        string className = "";
+        while (std::getline(classNamesFile, className))
+            classNamesVec.push_back(className);
+    }
+
+
+
+    for(;;)
+    {
+        Mat frame;
+        cap >> frame; // get a new frame from camera/video or read image
+
+        if (frame.empty())
+        {
+            waitKey();
+            break;
+        }
+
+        if (frame.channels() == 4)
+            cvtColor(frame, frame, COLOR_BGRA2BGR);
+
+        //! [Prepare blob]
+        Mat inputBlob = blobFromImage(frame, 1 / 255.F, Size(416, 416), Scalar(), true, false); //Convert Mat to batch of images
+        //! [Prepare blob]
+
+        //! [Set input blob]
+        net.setInput(inputBlob, "data");                   //set the network input
+        //! [Set input blob]
+
+        //! [Make forward pass]
+        Mat detectionMat = net.forward("detection_out");   //compute output
+        //! [Make forward pass]
+
+        vector<double> layersTimings;
+        double tick_freq = getTickFrequency();
+        double time_ms = net.getPerfProfile(layersTimings) / tick_freq * 1000;
+        putText(frame, format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
+                Point(20, 20), 0, 0.5, Scalar(0, 0, 255));
+
+
+        for (int i = 0; i < detectionMat.rows; i++)
+        {
+            const int probability_index = 5;
+            const int probability_size = detectionMat.cols - probability_index;
+            float *prob_array_ptr = &detectionMat.at<float>(i, probability_index);
+
+            size_t objectClass = max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
+            float confidence = detectionMat.at<float>(i, (int)objectClass + probability_index);
+
+            if (confidence > confidenceThreshold)
+            {
+                float x_center = detectionMat.at<float>(i, 0) * frame.cols;
+                float y_center = detectionMat.at<float>(i, 1) * frame.rows;
+                float width = detectionMat.at<float>(i, 2) * frame.cols;
+                float height = detectionMat.at<float>(i, 3) * frame.rows;
+                Point p1(cvRound(x_center - width / 2), cvRound(y_center - height / 2));
+                Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
+                Rect object(p1, p2);
+
+                Scalar object_roi_color(0, 255, 0);
+
+                if (object_roi_style == "box")
+                {
+                    rectangle(frame, object, object_roi_color);
+                }
+                else
+                {
+                    Point p_center(cvRound(x_center), cvRound(y_center));
+                    line(frame, object.tl(), p_center, object_roi_color, 1);
+                }
+
+                String className = objectClass < classNamesVec.size() ? classNamesVec[objectClass] : cv::format("unknown(%d)", objectClass);
+                String label = format("%s: %.2f", className.c_str(), confidence);
+                int baseLine = 0;
+                Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+                rectangle(frame, Rect(p1, Size(labelSize.width, labelSize.height + baseLine)),
+                          object_roi_color, FILLED);
+                putText(frame, label, p1 + Point(0, labelSize.height),
+                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+            }
+        }
+        if(writer.isOpened())
+        {
+            writer.write(frame);
+        }
+
+        QImage img=offline::Mat2QImage(frame);
+        ui->label_play->setPixmap(QPixmap::fromImage(img));
+        ui->label_play->setAlignment(Qt::AlignCenter);
+    }
+
+}
+}
+
+void offline::on_btn_dpm_clicked()
+{
+    String dpm_model_path = "../../detection/dpm/inriaperson.xml";
+    String dpm_image_dir = fileName.toStdString();
+
+    if (dpm_model_path.empty() || dpm_image_dir.empty()){
+        QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
+    }
+    cv::Ptr<DPMDetector> detector = DPMDetector::create(vector<string>(1, dpm_model_path));
+
+    Scalar color(0, 255, 255); // yellow
+    Mat frame;
+
+    Mat dpm_image = imread(dpm_image_dir);
+    vector<DPMDetector::ObjectDetection> ds;
+
+    frame = dpm_image.clone();
+    if(dpm_image.empty()){
+        QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空，请打开一张图片"));
+    }
+    //detection
+    detector->detect(dpm_image,ds);
+    // compute frame per second (fps)
+    //double t = ((double) getTickCount() - t)/getTickFrequency();//elapsed time
+    //draw boxes
+    for (unsigned int i = 0; i < ds.size(); i++)
+        {
+            rectangle(frame, ds[i].rect, color, 2);
+        }
+
+    // draw text on image
+    //String text =format("%0.1f fps",1.0/t);
+    //Scalar textColor(0,0,250);
+    //putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
+
+    QImage img=offline::Mat2QImage(frame);
+    ui->label_play->setPixmap(QPixmap::fromImage(img));
+    ui->label_play->setAlignment(Qt::AlignCenter);
+}
+
+
