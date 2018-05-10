@@ -74,6 +74,7 @@ private:
     QTimer *timer;
     double rate; //FPS
     cv::VideoWriter writer;   //make a video record
+
 };
 
 #endif // OFFLINE_H

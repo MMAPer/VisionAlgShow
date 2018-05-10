@@ -95,7 +95,7 @@ void offline::on_btn_open_clicked()
 
         }
         else{
-            videoFlag=1;
+            videoFlag = 1;
             capture.open(fileName.toLocal8Bit().data());
             if (capture.isOpened())
             {
@@ -110,6 +110,7 @@ void offline::on_btn_open_clicked()
                     timer->setInterval(1000/rate);   //set timer match with FPS
                     connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
                     timer->start();
+
 
                 }
             }
@@ -230,14 +231,14 @@ void offline::on_btn_faster_rcnn_clicked()
         }
         image=offline::Mat2QImage(img);
         ui->label_play->setPixmap(QPixmap::fromImage(image));
-       // ui->label_play->setAlignment(Qt::AlignHCenter);
-        //ui->label_play->setAlignment(Qt::AlignVCenter);
+        ui->label_play->setAlignment(Qt::AlignCenter);
 
     }
 }
 
 void offline::on_btn_ssd_clicked()
 {
+
     const char* classNames[] = {"background",
                                 "aeroplane", "bicycle", "bird", "boat",
                                 "bottle", "bus", "car", "cat", "chair",
@@ -249,9 +250,9 @@ void offline::on_btn_ssd_clicked()
 
     String modelConfiguration = "../../detection/ssd/deploy.prototxt";
     String modelBinary = "../../detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
-    String filePath = "../../videos/original.mp4";
-    //String filePath = fileName.toStdString();
-    int cameraDevice = 0;
+    //String filePath = "../../videos/original.mp4";
+    String filePath = fileName.toStdString();
+    //int cameraDevice = 0;
     float min_confidence = 0.5;
     //! [Initialize network]
     dnn::Net net = readNetFromCaffe(modelConfiguration, modelBinary);
@@ -262,31 +263,11 @@ void offline::on_btn_ssd_clicked()
         QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
     }
 
-    VideoCapture cap;
-    if (filePath.empty())
-    {
-        //int cameraDevice = parser.get<int>("camera_device");
-        cap = VideoCapture(cameraDevice);
-        if(!cap.isOpened())
-        {
-            cout << "Couldn't find camera: " << cameraDevice << endl;
-            //return -1;
-        }
-    }
-    else
-    {
-        cap.open(filePath);
-        if(!cap.isOpened())
-        {
-            cout << "Couldn't open image or video: " << filePath << endl;
-            //return -1;
-        }
-    }
 
-    for (;;)
-    {
-        cv::Mat frame;
-        cap >> frame; // get a new frame from camera/video or read image
+    if (videoFlag==1){
+        timer->stop();
+        for(;;){
+        capture>>frame;
         if (frame.empty())
         {
             waitKey();
@@ -352,13 +333,93 @@ void offline::on_btn_ssd_clicked()
             }
         }
 
-        imshow("detections", frame);
-        if (waitKey(1) >= 0) break;
+        //imshow("detections", frame);
+        //if (waitKey(1) >= 0) break;
         //cv::resize(frame, frame, Size(kInpWidth, kInpHeight));
-        //image=offline::Mat2QImage(frame);
-        //ui->label_play->setPixmap(QPixmap::fromImage(image));
-        //ui->label_play->setAlignment(Qt::AlignCenter);
+        image=offline::Mat2QImage(frame);
+        ui->label_play->setPixmap(QPixmap::fromImage(image));
+        ui->label_play->setAlignment(Qt::AlignCenter);
+        if (waitKey(1) >= 0) break;
 
+        }
+
+    }
+    else {
+        Mat ssd_frame;
+        ssd_frame = imread(filePath);
+
+        if(!ssd_frame.data)
+            {
+                QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空，请打开一张图片或一段视频"));
+                //QMessageBox msgBox;
+                //msgBox.setText(tr("Image Data Is Null"));
+                //msgBox.exec();
+            }
+            else {
+            if (ssd_frame.channels() == 4)
+                cvtColor(ssd_frame, ssd_frame, COLOR_BGRA2BGR);
+
+
+            //! [Prepare blob]
+            Mat inputBlob = blobFromImage(ssd_frame, 1.0f, Size(300, 300), Scalar(104, 117, 123), false, false); //Convert Mat to batch of images
+            //! [Prepare blob]
+
+            //! [Set input blob]
+            net.setInput(inputBlob, "data"); //set the network input
+            //! [Set input blob]
+
+            //! [Make forward pass]
+            Mat detection = net.forward("detection_out"); //compute output
+            //! [Make forward pass]
+
+            vector<double> layersTimings;
+            double freq = getTickFrequency() / 1000;
+            double time = net.getPerfProfile(layersTimings) / freq;
+            ostringstream ss;
+            ss << "FPS: " << 1000/time << " ; time: " << time << " ms";
+            putText(ssd_frame, ss.str(), Point(20,20), 0, 0.5, Scalar(0,0,255));
+
+            Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+
+            float confidenceThreshold = min_confidence;
+            for(int i = 0; i < detectionMat.rows; i++)
+            {
+                float confidence = detectionMat.at<float>(i, 2);
+
+                if(confidence > confidenceThreshold)
+                {
+                    size_t objectClass = (size_t)(detectionMat.at<float>(i, 1));
+
+                    int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * ssd_frame.cols);
+                    int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * ssd_frame.rows);
+                    int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * ssd_frame.cols);
+                    int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * ssd_frame.rows);
+
+                    ss.str("");
+                    ss << confidence;
+                    String conf(ss.str());
+
+                    Rect object(xLeftBottom, yLeftBottom,
+                                xRightTop - xLeftBottom,
+                                yRightTop - yLeftBottom);
+
+                    rectangle(ssd_frame, object, Scalar(0, 255, 0));
+                    String label = String(classNames[objectClass]) + ": " + conf;
+                    int baseLine = 0;
+                    Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+                    rectangle(ssd_frame, Rect(Point(xLeftBottom, yLeftBottom - labelSize.height),
+                                          Size(labelSize.width, labelSize.height + baseLine)),
+                              Scalar(255, 255, 255), FILLED);
+                    putText(ssd_frame, label, Point(xLeftBottom, yLeftBottom),
+                            FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+                }
+            }
+            QImage ssd_image;
+            ssd_image=offline::Mat2QImage(ssd_frame);
+            ui->label_play->setPixmap(QPixmap::fromImage(ssd_image));
+            ui->label_play->setAlignment(Qt::AlignCenter);
+
+            }
     }
 
 }
@@ -582,5 +643,7 @@ void offline::on_btn_dpm_clicked()
     ui->label_play->setPixmap(QPixmap::fromImage(img));
     ui->label_play->setAlignment(Qt::AlignCenter);
 }
+
+
 
 
