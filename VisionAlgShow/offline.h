@@ -51,19 +51,18 @@ private slots:
     void receiveofflinehandle();
     void InitStyle();
     void InitEvent();
+    void od_alg_clicked(const QString od_alg);
 
     void on_btn_back_clicked();
     void on_btn_open_clicked();
     void playbyframe();
-    void on_btn_faster_rcnn_clicked();
 
-    void on_btn_ssd_clicked();
-
-    void on_btn_hog_clicked();
-
-    void on_btn_yolo_clicked();
-
-    void on_btn_dpm_clicked();
+    //object detection algorithms
+    void od_alg_hog();
+    void od_alg_dpm();
+    void od_alg_faster_rcnn();
+    void od_alg_ssd();
+    void od_alg_yolo();
 
     void bgModel();
 
