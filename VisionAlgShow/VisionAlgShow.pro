@@ -66,12 +66,12 @@ INCLUDEPATH += ../linux64/incCn
 LIBS += -L../linux64/lib/ -Wl,-rpath=./:./HCNetSDKCom:../linux64/lib -lhcnetsdk -lPlayCtrl -lAudioRender -lSuperRender
 
 #OpenCV3.4.1
-INCLUDEPATH += /usr/local/opencv3.4.1/include \
-               /usr/local/opencv3.4.1/include/opencv \
-               /usr/local/opencv3.4.1/include/opencv2
-LIBS += /usr/local/opencv3.4.1/lib/libopencv_*.so
+#INCLUDEPATH += /usr/local/opencv3.4.1/include \
+#               /usr/local/opencv3.4.1/include/opencv \
+#               /usr/local/opencv3.4.1/include/opencv2
+#LIBS += /usr/local/opencv3.4.1/lib/libopencv_*.so
 
-#INCLUDEPATH += /usr/local/include \
-#               /usr/local/include/opencv \
-#               /usr/local/include/opencv2
-#LIBS += /usr/local/lib/libopencv_*.so
+INCLUDEPATH += /usr/local/include \
+               /usr/local/include/opencv \
+               /usr/local/include/opencv2
+LIBS += /usr/local/lib/libopencv_*.so

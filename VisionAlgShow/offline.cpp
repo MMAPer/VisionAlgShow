@@ -240,8 +240,8 @@ void offline::on_btn_faster_rcnn_clicked()
         QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为视频文件,请打开一张图片"));
     }
     else{
-        String protoPath = "../../detection/faster_rcnn/faster_rcnn_vgg16.prototxt";
-        String modelPath = "../../detection/faster_rcnn/VGG16_faster_rcnn_final.caffemodel";
+        String protoPath = "../../models/detection/faster_rcnn/faster_rcnn_vgg16.prototxt";
+        String modelPath = "../../models/detection/faster_rcnn/VGG16_faster_rcnn_final.caffemodel";
         String imagePath = fileName.toStdString();
         float confThreshold = 0.8;
         CV_Assert(!protoPath.empty(), !modelPath.empty(), !imagePath.empty());
@@ -305,8 +305,8 @@ void offline::on_btn_ssd_clicked()
 
 
 
-    String modelConfiguration = "../../detection/ssd/deploy.prototxt";
-    String modelBinary = "../../detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
+    String modelConfiguration = "../../models/detection/ssd/deploy.prototxt";
+    String modelBinary = "../../models/detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
     //String filePath = "../../videos/original.mp4";
     String filePath = fileName.toStdString();
     //int cameraDevice = 0;
@@ -663,7 +663,7 @@ void offline::on_btn_yolo_clicked()
 
 void offline::on_btn_dpm_clicked()
 {
-    String dpm_model_path = "../../detection/dpm/inriaperson.xml";
+    String dpm_model_path = "../../models/detection/dpm/inriaperson.xml";
     String dpm_image_dir = fileName.toStdString();
 
     if (dpm_model_path.empty() || dpm_image_dir.empty()){
