@@ -36,7 +36,8 @@ SOURCES += main.cpp\
     devicedata.cpp \
     treeitem.cpp \
     treemodel.cpp \
-    offline.cpp
+    offline.cpp \
+    tracking.cpp
 
 HEADERS  += visionalgmain.h \
     myapp.h \
@@ -49,12 +50,14 @@ HEADERS  += visionalgmain.h \
     Public.h \
     treeitem.h \
     treemodel.h \
-    offline.h
+    offline.h \
+    tracking.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \
     frameplaywnd.ui \
-    offline.ui
+    offline.ui \
+    tracking.ui
 
 win32:RC_FILE=main.rc
 

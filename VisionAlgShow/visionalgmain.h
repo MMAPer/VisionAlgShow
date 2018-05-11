@@ -3,6 +3,13 @@
 
 #include <QDialog>
 #include <QFileDialog>
+#include <QLabel>
+#include <QModelIndex>
+#include <QMenu>
+#include <QLayout>
+#include <QAction>
+#include <QString>
+#include <QStandardItem>
 #include "Public.h"
 #include "devicedata.h"
 #include "channeldata.h"
@@ -17,14 +24,6 @@
  * 作者:张精制  QQ:852370792
  * 时间:2018-03-10  检查:2018-3-10
  */
-
-class QLabel;
-class QModelIndex;
-class QMenu;
-class QLayout;
-class QAction;
-class QString;
-class QStandardItem;
 
 
 namespace Ui {
