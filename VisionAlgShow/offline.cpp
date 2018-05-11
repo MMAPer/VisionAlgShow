@@ -60,13 +60,13 @@ void offline::InitStyle()
 
     //背景建模
     cbox_bg = ui->cbox_bg;
-    string str_bg[] = {"", "KNN", "MOG2"};
+    string str_bg[] = {"请选择", "KNN", "MOG2"};
     vector<string> alg_bg(str_bg, str_bg+3);
     addCboxItem(cbox_bg, alg_bg);
 
     //目标检测
     cbox_od = ui->cbox_od;
-    string str_od[] = {"", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
+    string str_od[] = {"请选择", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
     vector<string> alg_od(str_od, str_od+6);
     addCboxItem(cbox_od, alg_od);
 
@@ -85,7 +85,35 @@ void addCboxItem(QComboBox *target, vector<string> items)
 void offline::InitEvent()
 {
     connect(cbox_bg, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(bgModel()));
-    connect(cbox_od, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(on_btn_ssd_clicked()));
+    connect(cbox_od, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(od_alg_clicked(const  QString &)));
+    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_hog()));
+    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_dpm()));
+    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_faster_rcnn()));
+    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_ssd()));
+    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_yolo()));
+}
+
+
+
+void offline::od_alg_clicked(const QString od_alg){
+
+    if(od_alg=="HOG+SVM"){
+        emit offline::od_alg_hog();
+   }
+    else if(od_alg=="DPM"){
+        emit offline::od_alg_dpm();
+   }
+    else if(od_alg=="Faster R-CNN"){
+        emit offline::od_alg_faster_rcnn();
+   }
+    else if(od_alg=="SSD"){
+        emit offline::od_alg_ssd();
+   }
+    else if(od_alg=="YOLO"){
+        emit offline::od_alg_yolo();
+    }
+
+
 }
 
 void offline::receiveofflinehandle(){
@@ -221,7 +249,7 @@ void offline::bgModel()
     }
 }
 
-void offline::on_btn_faster_rcnn_clicked()
+void offline::od_alg_faster_rcnn()
 {
     const char* classNames[] = {
         "__background__",
@@ -293,7 +321,7 @@ void offline::on_btn_faster_rcnn_clicked()
     }
 }
 
-void offline::on_btn_ssd_clicked()
+void offline::od_alg_ssd()
 {
 
     const char* classNames[] = {"background",
@@ -481,7 +509,7 @@ void offline::on_btn_ssd_clicked()
 
 }
 
-void offline::on_btn_hog_clicked()
+void offline::od_alg_hog()
 {
     String file = fileName.toStdString();
     cv::Mat image = cv::imread(file);
@@ -511,11 +539,11 @@ void offline::on_btn_hog_clicked()
 
 }
 
-void offline::on_btn_yolo_clicked()
+void offline::od_alg_yolo()
 {
-    String modelConfiguration = "/home/hbc/dev/projects/VisionAlgShow/detection/yolo/yolov2.cfg";
-    String modelBinary = "/home/hbc/dev/projects/VisionAlgShow/detection/yolo/yolov2.weights";
-    String class_names ="/home/hbc/dev/projects/VisionAlgShow/detection/yolo/coco.names";
+    String modelConfiguration = "../../models/detection/yolo/yolov2.cfg";
+    String modelBinary = "../../models/detection/yolo/yolov2.weights";
+    String class_names ="../../models/detection/yolo/coco.names";
     String source = fileName.toStdString();
     String  out = "/home/hbc/dev/projects/VisionAlgShow/images/output.jpg";
     String object_roi_style = "box";   // box or line style draw
@@ -661,7 +689,7 @@ void offline::on_btn_yolo_clicked()
 }
 }
 
-void offline::on_btn_dpm_clicked()
+void offline::od_alg_dpm()
 {
     String dpm_model_path = "../../models/detection/dpm/inriaperson.xml";
     String dpm_image_dir = fileName.toStdString();
