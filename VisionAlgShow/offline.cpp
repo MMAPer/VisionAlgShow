@@ -17,12 +17,16 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn/shape_utils.hpp>
 #include <opencv2/dpm.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/video/background_segm.hpp>
 #include <iostream>
 using namespace cv;
 using namespace dnn;
 using namespace std;
 using namespace cv::dnn;
 using namespace cv::dpm;
+
+void addCboxItem(QComboBox *target, vector<string> items);
 
 offline::offline(QWidget *parent) :
     QDialog(parent),
@@ -53,18 +57,34 @@ void offline::InitStyle()
 
     ui->label_title->setText("本地视频文件处理");
     this->setWindowTitle("本地视频文件处理");
+
+    //背景建模
+    cbox_bg = ui->cbox_bg;
+    string str_bg[] = {"", "KNN", "MOG2"};
+    vector<string> alg_bg(str_bg, str_bg+3);
+    addCboxItem(cbox_bg, alg_bg);
+
+    //目标检测
     cbox_od = ui->cbox_od;
-    cbox_od->addItem(tr("HOG+SVM"));
-    cbox_od->addItem(tr("DPM"));
-    cbox_od->addItem(tr("Faster R-CNN"));
-    cbox_od->addItem(tr("YOLO"));
-    cbox_od->addItem(tr("SSD"));
+    string str_od[] = {"", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
+    vector<string> alg_od(str_od, str_od+6);
+    addCboxItem(cbox_od, alg_od);
+
     //ui->label_play->setStyleSheet("border: 1px solid #000000;");
 
 }
 
+void addCboxItem(QComboBox *target, vector<string> items)
+{
+    for(int i=0; i<items.size(); i++)
+    {
+        target->addItem(QString::fromStdString(items[i]));
+    }
+}
+
 void offline::InitEvent()
 {
+    connect(cbox_bg, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(bgModel()));
     connect(cbox_od, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(on_btn_ssd_clicked()));
 }
 
@@ -173,7 +193,33 @@ QImage offline::Mat2QImage(cv::Mat cvImg)
 
 }
 
+void offline::bgModel()
+{
 
+    if (videoFlag==1){
+        timer->stop();
+        Mat fgmask;
+        while(capture.read(frame)){
+        if (frame.empty())
+        {
+            waitKey();
+            break;
+        }
+
+        if (frame.channels() == 4)
+            cvtColor(frame, frame, COLOR_BGRA2BGR);
+
+
+        Ptr<BackgroundSubtractor> bg_model = createBackgroundSubtractorMOG2();
+        bg_model->apply(frame, fgmask);
+
+        image=offline::Mat2QImage(fgmask);
+        ui->label_play->setPixmap(QPixmap::fromImage(image));
+        ui->label_play->setAlignment(Qt::AlignCenter);
+        if (waitKey(1) >= 0) break;
+        }
+    }
+}
 
 void offline::on_btn_faster_rcnn_clicked()
 {

@@ -7,6 +7,8 @@
 #include <QList>
 #include <QComboBox>
 #include <QModelIndex>
+#include <vector>
+#include <string>
 #include "devicedata.h"
 #include "channeldata.h"
 #include "treeitem.h"
@@ -62,6 +64,8 @@ private slots:
     void on_btn_yolo_clicked();
 
     void on_btn_dpm_clicked();
+
+    void bgModel();
 
 signals:
     void backmain();
