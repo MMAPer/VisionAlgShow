@@ -10,7 +10,7 @@ DeviceData::DeviceData()
     m_qiport = 0;
     m_qusername = "";
     m_qpassword = "";
-	m_ideployed = -1;
+    m_ideployed = -1;
     m_multiCast = "234.5.6.7";
 }
 
@@ -29,7 +29,7 @@ void DeviceData::setRealPlayLabel(int value)
 
 int DeviceData::getRealPlayLabel()
 {
-    return m_irealplaying;   
+    return m_irealplaying;
 }
 
 
@@ -106,7 +106,7 @@ QString DeviceData::getPasswd()
 
 int DeviceData::modifyChannelDataChild(ChannelData *channel)
 {
-    for ( QList<ChannelData >::Iterator it = m_qlistchanneldata.begin(); it != 
+    for ( QList<ChannelData >::Iterator it = m_qlistchanneldata.begin(); it !=
     m_qlistchanneldata.end(); ++it )
     {
         if ((*it).m_ichannelnum == channel->m_ichannelnum)
@@ -128,25 +128,22 @@ NET_DVR_DEVICEINFO_V30 DeviceData::getDeviceInfo()
 
 void DeviceData::setDeployState(int deployed)
 {
-	m_ideployed = deployed;
+    m_ideployed = deployed;
 }
 
 int  DeviceData::getDeployState()
 {
-	return m_ideployed;
+    return m_ideployed;
 }
 
 
 void DeviceData::setMultiCast(QString multiCast)
 {
-	m_multiCast = multiCast;
+    m_multiCast = multiCast;
 }
 
 
 QString DeviceData::getMultiCast()
 {
-	return m_multiCast;
+    return m_multiCast;
 }
-
-
-

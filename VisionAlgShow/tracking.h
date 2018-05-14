@@ -1,5 +1,5 @@
-#ifndef OFFLINE_H
-#define OFFLINE_H
+#ifndef TRACKING_H
+#define TRACKING_H
 
 #include <QDialog>
 #include "Public.h"
@@ -18,7 +18,7 @@
 
 
 namespace Ui {
-class offline;
+class tracking;
 }
 
 class tracking : public QDialog
@@ -48,7 +48,6 @@ public:
 
 
 private slots:
-    void receiveofflinehandle();
     void InitStyle();
     void InitEvent();
 
@@ -67,10 +66,8 @@ private slots:
 
     void bgModel();
 
-signals:
-    void backmain();
 private:
-    Ui::offline *ui;
+    Ui::tracking *ui;
 
     //2018.3.21 by hbc
     cv::VideoCapture capture;

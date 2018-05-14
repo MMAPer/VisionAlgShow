@@ -48,7 +48,6 @@ public:
 
 
 private slots:
-    void receiveofflinehandle();
     void InitStyle();
     void InitEvent();
     void od_alg_clicked(const QString od_alg);
@@ -66,8 +65,6 @@ private slots:
 
     void bgModel();
 
-signals:
-    void backmain();
 private:
     Ui::offline *ui;
 
@@ -84,6 +81,7 @@ private:
     QComboBox *cbox_od;  //目标检测下拉按钮
     QComboBox *cbox_sot;  //单目标跟踪下拉按钮
     QComboBox *cbox_sm;  //衣物解析下拉按钮
+
 
 };
 

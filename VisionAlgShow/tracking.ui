@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>offline</class>
- <widget class="QDialog" name="offline">
+ <class>tracking</class>
+ <widget class="QDialog" name="tracking">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -111,7 +111,7 @@
        <string notr="true">font:10pt &quot;微软雅黑&quot;;</string>
       </property>
       <property name="text">
-       <string>本地视频文件处理</string>
+       <string>跟踪实验</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_back">

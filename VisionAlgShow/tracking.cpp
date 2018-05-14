@@ -1,5 +1,5 @@
 #include "tracking.h"
-#include "ui_offline.h"
+#include "ui_tracking.h"
 #include "iconhelper.h"
 #include "myapp.h"
 #include "QMenu"
@@ -30,7 +30,7 @@ void addCboxItem2(QComboBox *target, vector<string> items);
 
 tracking::tracking(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::offline)
+    ui(new Ui::tracking)
 {
 
     ui->setupUi(this);
@@ -55,7 +55,7 @@ void tracking::InitStyle()
 
     IconHelper::Instance()->SetIcon(ui->label_ico, QChar(0xf03d), 11);
 
-    ui->label_title->setText("本地视频文件处理");
+    ui->label_title->setText("跟踪实验");
     this->setWindowTitle("本地视频文件处理");
 
     //背景建模
@@ -88,15 +88,10 @@ void tracking::InitEvent()
     connect(cbox_od, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(on_btn_ssd_clicked()));
 }
 
-void tracking::receiveofflinehandle(){
-    this->show();
-}
 
 void tracking::on_btn_back_clicked()
 {
-    this->hide();
-    emit backmain();
-
+    close();
 }
 
 //open file

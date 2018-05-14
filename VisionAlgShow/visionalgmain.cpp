@@ -2,6 +2,8 @@
 #include "ui_visionalgmain.h"
 #include "iconhelper.h"
 #include "myapp.h"
+#include "offline.h"
+#include "tracking.h"
 #include <QDesktopWidget>
 #include <opencv2/opencv.hpp>
 extern VisionAlgMain* visionalgmain;
@@ -21,12 +23,7 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    m_gcurrentuserid = -1;  //当前登录用户
-    m_guseridbackup = m_gcurrentuserid;
-    m_gcurrentchannelnum = 1;  //当前选择通道
-    m_gchannelnumbackup = 1;
-    m_gcurrentchannellinkmode = 0x0;  //当前通道链接模式
-    m_gmodel = NULL;  //当前的自定义TreeModel数据  重写了QStandardItemModel
+    this->InitData();
     this->InitStyle();  //初始化样式
     this->InitSlot();  //连接信号与槽
     this->InitSdk();  //初始化SDK
@@ -44,7 +41,16 @@ VisionAlgMain::~VisionAlgMain()
     NET_DVR_Cleanup();
 }
 
-
+//初始化用户及摄像头设备数据
+void VisionAlgMain::InitData()
+{
+    m_gcurrentuserid = -1;  //当前登录用户
+    m_guseridbackup = m_gcurrentuserid;
+    m_gcurrentchannelnum = 1;  //当前选择通道
+    m_gchannelnumbackup = 1;
+    m_gcurrentchannellinkmode = 0x0;  //当前通道链接模式
+    m_gmodel = NULL;  //当前的自定义TreeModel数据  重写了QStandardItemModel
+}
 
 //init the global style of the application
 void VisionAlgMain::InitStyle()
@@ -134,31 +140,76 @@ void VisionAlgMain::InitVideo()
     show_video_9();
 }
 
-bool VisionAlgMain::eventFilter(QObject *obj, QEvent *event)
-{
-    QMouseEvent *MouseEvent = static_cast<QMouseEvent *>(event);
-    if((event->type()) == QEvent::MouseButtonPress)
-    {
-        if(MouseEvent->buttons() == Qt::RightButton)
-        {
-            tempLab = qobject_cast<QLabel *>(obj);
-            menu->exec(QCursor::pos());
-            return true;
-        }
-    }
-}
 
 void VisionAlgMain::InitSlot()
 {
+    //添加事件监听器
+    ui->btn_offlinehandle->installEventFilter(this);
     //左侧树监听事件
     ui->DVRsets_treeView->setMouseTracking(1);
     connect(ui->DVRsets_treeView, SIGNAL(pressed(const QModelIndex &)),
             this, SLOT(pressedTreeView(const QModelIndex &)));  //单击
     connect(ui->DVRsets_treeView, SIGNAL(doubleClicked(const QModelIndex &)),
             this, SLOT(OnDoubleClickTree(const QModelIndex &)));  //双击
+    //按钮点击事件
+    connect(ui->btnMenu_Full, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Full_clicked()));  //进入全屏
+    connect(ui->btnMenu_Login, SIGNAL(clicked(bool)), this, SLOT(login()));  //登录
+    connect(ui->btnMenu_Setting, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Setting_clicked()));  //系统设置
+    connect(ui->btnMenu_Logout, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Logout_clicked()));  //注销
+    connect(ui->btnMenu_Min, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Min_clicked()));  //最小化
+    connect(ui->btnMenu_Close, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Close_clicked()));  //关闭
+    connect(ui->btn_offlinehandle, SIGNAL(clicked(bool)), this, SLOT(offlinehandle()));  //离线处理
+}
 
+//通过注册事件监听器绑定事件
+bool VisionAlgMain::eventFilter(QObject *obj, QEvent *event)
+{
+    QMouseEvent *MouseEvent = static_cast<QMouseEvent *>(event);
+    if((event->type()) == QEvent::MouseButtonPress)
+    {
+       if(MouseEvent->buttons() == Qt::RightButton)
+        {
+            tempLab = qobject_cast<QLabel *>(obj);
+            menu->exec(QCursor::pos());
+            return true;
+        }
+    }
+    return QObject::eventFilter(obj, event);
+}
 
-    connect(ui->btnMenu_Full, SIGNAL(clicked()), this, SLOT(screen_full()));
+//键盘事件
+void VisionAlgMain::keyPressEvent(QKeyEvent *event)
+{
+    //F1键进入全屏,esc键退出全屏
+    switch(event->key()) {
+    case Qt::Key_F1:
+        on_btnMenu_Full_clicked();
+        break;
+    case Qt::Key_Escape:
+        screen_normal();
+        break;
+    default:
+        QDialog::keyPressEvent(event);
+        break;
+    }
+}
+
+//系统设置
+void VisionAlgMain::on_btnMenu_Setting_clicked()
+{
+    qDebug()<<"系统设置"<<endl;
+}
+
+//离线处理
+void VisionAlgMain::offlinehandle()
+{
+//    offline o;
+//    o.setGeometry(qApp->desktop()->availableGeometry());
+//    o.exec();
+    qDebug()<<"离线处理"<<endl;
+    tracking t;
+    t.setGeometry(qApp->desktop()->availableGeometry());
+    t.exec();
 }
 
 void VisionAlgMain::removelayout()
@@ -282,21 +333,6 @@ void VisionAlgMain::change_video_16(int index)
     }
 }
 
-void VisionAlgMain::keyPressEvent(QKeyEvent *event)
-{
-    //空格键进入全屏,esc键退出全屏
-    switch(event->key()) {
-    case Qt::Key_F1:
-        screen_full();
-        break;
-    case Qt::Key_Escape:
-        screen_normal();
-        break;
-    default:
-        QDialog::keyPressEvent(event);
-        break;
-    }
-}
 
 //关闭
 void VisionAlgMain::on_btnMenu_Close_clicked()
@@ -311,20 +347,21 @@ void VisionAlgMain::on_btnMenu_Min_clicked()
 }
 
 //登录，实际上只是获取了设备和通道信息，获取完成后又注销用户。当双击左侧树结点时，再次登录。应该是考虑资源利用效率的问题
-void VisionAlgMain::on_btnMenu_Login_clicked()
+void VisionAlgMain::login()
 {
+    //防止重复登录
     if(m_bislogin==TRUE)
     {
         QMessageBox::information(this, tr("login information"), tr("您已经登录"));
         return;
     }
-    DeviceData *newDNode = new DeviceData;
-    QString treedatastring;
-    newDNode->m_qdevicename = myApp::DeviceNodeName;
-    newDNode->m_qip = myApp::DeviceIp;
-    newDNode->m_qiport = myApp::DevicePort;
-    newDNode->m_qusername = myApp::DeviceUserName;
-    newDNode->m_qpassword = myApp::DevicePwd;
+    DeviceData *newDNode = new DeviceData;  //设备信息
+    QString treedatastring;  //设备信息写成字符串，供左侧树解析
+    newDNode->m_qdevicename = myApp::DeviceNodeName;  //设备名称
+    newDNode->m_qip = myApp::DeviceIp;  //设备IP
+    newDNode->m_qiport = myApp::DevicePort;  //设备端口
+    newDNode->m_qusername = myApp::DeviceUserName;  //用户名
+    newDNode->m_qpassword = myApp::DevicePwd;  //密码
 
     //先要尝试登陆设备，登陆成功后才能加入到队列中，然后还要判断通道情况
     newDNode->m_iuserid = NET_DVR_Login_V30(newDNode->getIP().toLatin1().data(),
@@ -332,6 +369,9 @@ void VisionAlgMain::on_btnMenu_Login_clicked()
                                             newDNode->getUsrName().toLatin1().data(),
                                             newDNode->getPasswd().toLatin1().data(),
                                             &newDNode->m_deviceinfo);
+    //目前起始通道号是1  设备支持的最大通道数是64
+    qDebug()<<"起始通道号="<<newDNode->m_deviceinfo.byStartDChan<<
+              ";设备支持最大IP通道数="<<newDNode->m_deviceinfo.byIPChanNum+256*newDNode->m_deviceinfo.byHighDChanNum<<endl;
     //登录失败
     if (newDNode->m_iuserid < 0)
     {
@@ -342,13 +382,17 @@ void VisionAlgMain::on_btnMenu_Login_clicked()
     else  //登录成功
     {
         qDebug()<<"设备登陆成功，用户ID为"<<newDNode->m_iuserid;
-        m_bislogin = TRUE;
-        //测试通道信息，填充通道数据
+        //登录设备成功后，获取通道信息
+        //目前中心设备为NVR，只有IP通道，通道号为：byStartDChan到byStartDChan+(byIpChanNum+byHighDChanNum*256)-1
         NET_DVR_IPPARACFG ipcfg;
         DWORD Bytesreturned;
-        //获取IP接入配置参数
-        if(!NET_DVR_GetDVRConfig(newDNode->m_iuserid, NET_DVR_GET_IPPARACFG,0,&ipcfg,sizeof(NET_DVR_IPPARACFG),&Bytesreturned))
+        //通过远程参数配置接口NET_DVR_GetDVRConfig获取设备详细的IP资源信息，获取成功返回1，否则返回0
+        int status = NET_DVR_GetDVRConfig(newDNode->m_iuserid, NET_DVR_GET_IPPARACFG,0,&ipcfg,sizeof(NET_DVR_IPPARACFG),&Bytesreturned);
+        qDebug()<<"获取设备详细的IP资源信息status="<<status<<endl;
+
+        if(!status)
         {
+            qDebug()<<"8000 devices begin"<<endl;
             //8000 devices begin
             NET_DVR_DEVICECFG devicecfg;
             DWORD Bytesreturned;
@@ -421,7 +465,7 @@ void VisionAlgMain::on_btnMenu_Login_clicked()
                 name.append(num);
                 //填充通道初始属性内容,初始设为TCP+主码流
                 newChannel->setChannelName(name);
-                newChannel->setChannelNum(32+ipcfg.struIPChanInfo[i].byIPID);
+                newChannel->setChannelNum(ipcfg.struIPChanInfo[i].byIPID);
                 newChannel->setProtocolType(TCP);
                 newChannel->setStreamType(MAINSTREAM);
                 //添加进设备节点
@@ -434,9 +478,10 @@ void VisionAlgMain::on_btnMenu_Login_clicked()
         newDNode->m_iuserid = -1;
         m_qlistdevicedata.append(*newDNode);
         delete newDNode;
-        treedatastring =getStringFromList(m_qlistdevicedata);
+        treedatastring = getStringFromList(m_qlistdevicedata);
         qDebug()<<"treedatastring = "<<treedatastring;
         showDeviceTree(treedatastring);
+        qDebug()<<"login completed!"<<endl;
         m_bislogin = TRUE;
         return;
     }
@@ -941,7 +986,7 @@ void VisionAlgMain::stopRealPlayEncapseInterface()
     (*it).setRealPlayLabel(0);
 }
 
-//从设备列表中获取设备字符串
+//从设备列表中获取设备字符串,该函数主要是为了今后写入文件，保存信息
 QString VisionAlgMain::getStringFromList(QList<DeviceData> & data)
 {
     QString dataInString;
@@ -990,7 +1035,6 @@ QString VisionAlgMain::getStringFromList(QList<DeviceData> & data)
     return dataInString;
 }
 
-
 //显示设备树信息
 void VisionAlgMain::showDeviceTree(const QString &nodedata)
 {
@@ -1002,7 +1046,7 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
         QMessageBox::information(this,tr("system message"),tr("add or delete device success"));
     }
 
-    m_gmodel = new TreeModel(nodedata);
+    m_gmodel = new TreeModel(nodedata);  //TreeModel继承QStandardItemModel，内部会解析xml字符串
     ui->DVRsets_treeView->header()->hide();
     ui->DVRsets_treeView->setModel(m_gmodel);
 
@@ -1066,6 +1110,7 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
     }
 }
 
+//注销
 void VisionAlgMain::on_btnMenu_Logout_clicked()
 {
     if(m_gcurrentuserid<0)
@@ -1111,8 +1156,8 @@ void VisionAlgMain::on_btnMenu_Logout_clicked()
     }
 }
 
-
-void VisionAlgMain::screen_full()
+//全屏
+void VisionAlgMain::on_btnMenu_Full_clicked()
 {
     this->setGeometry(qApp->desktop()->geometry());
     this->layout()->setContentsMargins(0, 0, 0, 0);
@@ -1122,6 +1167,7 @@ void VisionAlgMain::screen_full()
     ui->widget_right->setVisible(false);
 }
 
+//正常屏
 void VisionAlgMain::screen_normal()
 {
     this->setGeometry(qApp->desktop()->availableGeometry());
@@ -1130,14 +1176,4 @@ void VisionAlgMain::screen_normal()
     ui->widget_title->setVisible(true);
     ui->widget_left->setVisible(true);
     ui->widget_right->setVisible(true);
-}
-
-void VisionAlgMain::on_btn_offlinehandle_clicked()
-{
-    this->hide();
-    emit offlineHandle();    //激活信号，让信号传送到特定界面
-}
-
-void VisionAlgMain::receiveback(){
-    this->show();
 }

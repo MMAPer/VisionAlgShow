@@ -2,6 +2,7 @@
 #include "myhelper.h"
 #include "myapp.h"
 #include "offline.h"
+#include "tracking.h"
 #include <QApplication>
 #include <QDebug>
 
@@ -25,12 +26,6 @@ int main(int argc, char *argv[])
     VisionAlgMain w;
     w.show();
     w.setGeometry(qApp->desktop()->availableGeometry());
-
-    offline o;
-    o.setGeometry(qApp->desktop()->availableGeometry());
-    QObject::connect(&w,SIGNAL(offlineHandle()),&o,SLOT(receiveofflinehandle()));
-    QObject::connect(&o,SIGNAL(backmain()),&w,SLOT(receiveback()));
-
 
     return a.exec();
 }

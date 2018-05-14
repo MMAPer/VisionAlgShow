@@ -110,21 +110,18 @@ void offline::od_alg_clicked(const QString od_alg){
         emit offline::od_alg_ssd();
    }
     else if(od_alg=="YOLO"){
+
+        //QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("yolo"));
         emit offline::od_alg_yolo();
     }
 
 
 }
 
-void offline::receiveofflinehandle(){
-    this->show();
-}
 
 void offline::on_btn_back_clicked()
 {
-    this->hide();
-    emit backmain();
-
+    close();
 }
 
 //open file
@@ -545,7 +542,7 @@ void offline::od_alg_yolo()
     String modelBinary = "../../models/detection/yolo/yolov2.weights";
     String class_names ="../../models/detection/yolo/coco.names";
     String source = fileName.toStdString();
-    String  out = "/home/hbc/dev/projects/VisionAlgShow/images/output.jpg";
+    String  out = "../../images/output.jpg";
     String object_roi_style = "box";   // box or line style draw
     int cameraDevice = 0;
     double fps = 3;
