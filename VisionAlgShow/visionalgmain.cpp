@@ -1062,18 +1062,18 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
     ui->DVRsets_treeView->setExpanded(m_gmodel->index(0,0), 1);
 
     //更新设备状态和通道状态 先找设备树节点然后递归
-    QModelIndex tmpindex = m_gmodel->index(0,0);
+    QModelIndex tmpindex = m_gmodel->index(0,0);  //根节点，参数为行和列
     if (tmpindex.isValid()==1)
     {
         ui->DVRsets_treeView->setExpanded(tmpindex, 1);
     }
 
-    QModelIndex devicetreeindex = tmpindex;
+    QModelIndex devicetreeindex = tmpindex;  //根节点
     QModelIndex deviceindex = tmpindex.child(0,0);
 
 
-    QList<DeviceData>::iterator it;
-    QList<ChannelData>::iterator it_channel;
+    QList<DeviceData>::iterator it;  //设备迭代器
+    QList<ChannelData>::iterator it_channel;  //通道迭代器
     int i=0;
     it = m_qlistdevicedata.begin();
     while((deviceindex.isValid()==1)&&(it != m_qlistdevicedata.end()))
