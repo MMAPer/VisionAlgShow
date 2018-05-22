@@ -19,6 +19,7 @@
 #include <opencv2/dpm.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/video/background_segm.hpp>
+#include <opencv2/cudacodec.hpp>
 #include <iostream>
 using namespace cv;
 using namespace dnn;
@@ -152,12 +153,16 @@ void offline::on_btn_open_clicked()
         }
         else{
             videoFlag = 1;
-            capture.open(fileName.toLocal8Bit().data());
-            if (capture.isOpened())
-            {
-                rate= capture.get(CV_CAP_PROP_FPS);
-                capture >> frame;
-                if (!frame.empty())
+            //capture.open(fileName.toLocal8Bit().data());
+
+            g_reader = cv::cudacodec::createVideoReader(fileName.toStdString());
+            g_reader->nextFrame(g_frame);
+            rate = 30;
+            //if (capture.isOpened())
+            //{
+                //rate= capture.get(CV_CAP_PROP_FPS);
+                //capture >> frame;
+                if (!g_frame.empty())
                 {
                     image = Mat2QImage(frame);
                     ui->label_play->setPixmap(QPixmap::fromImage(image));
@@ -166,11 +171,9 @@ void offline::on_btn_open_clicked()
                     timer->setInterval(1000/rate);   //set timer match with FPS
                     connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
                     timer->start();
-
-
                 }
             }
-        }
+
 
 }
 
@@ -244,6 +247,76 @@ void offline::bgModel()
         if (waitKey(1) >= 0) break;
         }
     }
+}
+
+void offline::od_alg_hog()
+{
+    String file = fileName.toStdString();
+    cv::Mat image = cv::imread(file);
+    if (image.empty())
+    {
+        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空,请打开一张图片"));
+    }
+    else{
+    //【1】定义hog描述符
+    cv::HOGDescriptor hog;
+    //【2】设置SVM分类器
+    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
+    //【3】在测试图像上检测行人区域
+    std::vector<cv::Rect> regions;
+    hog.detectMultiScale(image, regions, 0, cv::Size(8, 8), cv::Size(32, 32), 1.05, 1);
+
+    for (size_t i = 0; i < regions.size(); i++)
+    {
+        cv::rectangle(image, regions[i], cv::Scalar(0, 0, 255), 2);
+    }
+    //cv::imshow("行人检测", image);
+    QImage img=offline::Mat2QImage(image);
+    ui->label_play->setPixmap(QPixmap::fromImage(img));
+    ui->label_play->setAlignment(Qt::AlignCenter);
+
+    }
+
+}
+
+void offline::od_alg_dpm()
+{
+    String dpm_model_path = "../../models/detection/dpm/inriaperson.xml";
+    String dpm_image_dir = fileName.toStdString();
+
+    if (dpm_model_path.empty() || dpm_image_dir.empty()){
+        QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
+    }
+    cv::Ptr<DPMDetector> detector = DPMDetector::create(vector<string>(1, dpm_model_path));
+
+    Scalar color(0, 255, 255); // yellow
+    Mat frame;
+
+    Mat dpm_image = imread(dpm_image_dir);
+    vector<DPMDetector::ObjectDetection> ds;
+
+    frame = dpm_image.clone();
+    if(dpm_image.empty()){
+        QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空，请打开一张图片"));
+    }
+    //detection
+    detector->detect(dpm_image,ds);
+    // compute frame per second (fps)
+    //double t = ((double) getTickCount() - t)/getTickFrequency();//elapsed time
+    //draw boxes
+    for (unsigned int i = 0; i < ds.size(); i++)
+        {
+            rectangle(frame, ds[i].rect, color, 2);
+        }
+
+    // draw text on image
+    //String text =format("%0.1f fps",1.0/t);
+    //Scalar textColor(0,0,250);
+    //putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
+
+    QImage img=offline::Mat2QImage(frame);
+    ui->label_play->setPixmap(QPixmap::fromImage(img));
+    ui->label_play->setAlignment(Qt::AlignCenter);
 }
 
 void offline::od_alg_faster_rcnn()
@@ -344,17 +417,18 @@ void offline::od_alg_ssd()
     {
         QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
     }
-
-
     if (videoFlag==1){
         timer->stop();
-        for(;;){
-        capture>>frame;
-        if (frame.empty())
+        for(;;)
         {
+        //capture>>frame;
+           g_reader->nextFrame(frame);
+
+            if (frame.empty())
+            {
             waitKey();
-            break;
-        }
+            break;      
+            }
 
         if (frame.channels() == 4)
             cvtColor(frame, frame, COLOR_BGRA2BGR);
@@ -422,7 +496,6 @@ void offline::od_alg_ssd()
         ui->label_play->setPixmap(QPixmap::fromImage(image));
         ui->label_play->setAlignment(Qt::AlignCenter);
         if (waitKey(1) >= 0) break;
-
         }
 
     }
@@ -502,36 +575,6 @@ void offline::od_alg_ssd()
             ui->label_play->setAlignment(Qt::AlignCenter);
 
             }
-    }
-
-}
-
-void offline::od_alg_hog()
-{
-    String file = fileName.toStdString();
-    cv::Mat image = cv::imread(file);
-    if (image.empty())
-    {
-        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空,请打开一张图片"));
-    }
-    else{
-    //【1】定义hog描述符
-    cv::HOGDescriptor hog;
-    //【2】设置SVM分类器
-    hog.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-    //【3】在测试图像上检测行人区域
-    std::vector<cv::Rect> regions;
-    hog.detectMultiScale(image, regions, 0, cv::Size(8, 8), cv::Size(32, 32), 1.05, 1);
-
-    for (size_t i = 0; i < regions.size(); i++)
-    {
-        cv::rectangle(image, regions[i], cv::Scalar(0, 0, 255), 2);
-    }
-    //cv::imshow("行人检测", image);
-    QImage img=offline::Mat2QImage(image);
-    ui->label_play->setPixmap(QPixmap::fromImage(img));
-    ui->label_play->setAlignment(Qt::AlignCenter);
-
     }
 
 }
@@ -686,45 +729,7 @@ void offline::od_alg_yolo()
 }
 }
 
-void offline::od_alg_dpm()
-{
-    String dpm_model_path = "../../models/detection/dpm/inriaperson.xml";
-    String dpm_image_dir = fileName.toStdString();
 
-    if (dpm_model_path.empty() || dpm_image_dir.empty()){
-        QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
-    }
-    cv::Ptr<DPMDetector> detector = DPMDetector::create(vector<string>(1, dpm_model_path));
-
-    Scalar color(0, 255, 255); // yellow
-    Mat frame;
-
-    Mat dpm_image = imread(dpm_image_dir);
-    vector<DPMDetector::ObjectDetection> ds;
-
-    frame = dpm_image.clone();
-    if(dpm_image.empty()){
-        QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空，请打开一张图片"));
-    }
-    //detection
-    detector->detect(dpm_image,ds);
-    // compute frame per second (fps)
-    //double t = ((double) getTickCount() - t)/getTickFrequency();//elapsed time
-    //draw boxes
-    for (unsigned int i = 0; i < ds.size(); i++)
-        {
-            rectangle(frame, ds[i].rect, color, 2);
-        }
-
-    // draw text on image
-    //String text =format("%0.1f fps",1.0/t);
-    //Scalar textColor(0,0,250);
-    //putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
-
-    QImage img=offline::Mat2QImage(frame);
-    ui->label_play->setPixmap(QPixmap::fromImage(img));
-    ui->label_play->setAlignment(Qt::AlignCenter);
-}
 
 
 

@@ -45,6 +45,8 @@ public:
     int videoFlag=0;
     QString fileName;
     QString fileSuffix;
+    cv::cuda::GpuMat g_frame;
+    cv::Ptr<cv::cudacodec::VideoReader> g_reader;
 
 
 private slots:
