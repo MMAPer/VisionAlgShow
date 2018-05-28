@@ -43,7 +43,7 @@ public:
     int m_gcurrentchannellinkmode;  //通道链接模式
     int m_rpwindownumindex;  //窗口数量选择按钮的索引
     int videoFlag=0;
-    QString fileName;
+    QString filePath;
     QString fileSuffix;
     cv::cuda::GpuMat g_frame;
     cv::Ptr<cv::cudacodec::VideoReader> g_reader;
@@ -65,7 +65,7 @@ private slots:
     void od_alg_ssd();
     void od_alg_yolo();
 
-    void bgModel();
+    void bgSubtraction();
 
 private:
     Ui::offline *ui;

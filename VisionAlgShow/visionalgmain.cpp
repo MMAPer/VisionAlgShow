@@ -203,13 +203,13 @@ void VisionAlgMain::on_btnMenu_Setting_clicked()
 //离线处理
 void VisionAlgMain::offlinehandle()
 {
-//    offline o;
-//    o.setGeometry(qApp->desktop()->availableGeometry());
-//    o.exec();
-    qDebug()<<"离线处理"<<endl;
-    tracking t;
-    t.setGeometry(qApp->desktop()->availableGeometry());
-    t.exec();
+    offline o;
+    o.setGeometry(qApp->desktop()->availableGeometry());
+    o.exec();
+    //qDebug()<<"离线处理"<<endl;
+    //tracking t;
+    //t.setGeometry(qApp->desktop()->availableGeometry());
+    //t.exec();
 }
 
 void VisionAlgMain::removelayout()

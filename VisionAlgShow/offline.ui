@@ -436,6 +436,19 @@
           <string/>
          </property>
         </widget>
+        <widget class="QLabel" name="label_info">
+         <property name="geometry">
+          <rect>
+           <x>56</x>
+           <y>596</y>
+           <width>311</width>
+           <height>61</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
        </widget>
       </item>
       <item>

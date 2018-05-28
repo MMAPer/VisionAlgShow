@@ -21,6 +21,8 @@
 #include <opencv2/video/background_segm.hpp>
 #include <opencv2/cudacodec.hpp>
 #include <iostream>
+#include <time.h>
+#include<opencv2/cudaimgproc.hpp>
 using namespace cv;
 using namespace dnn;
 using namespace std;
@@ -85,38 +87,42 @@ void addCboxItem(QComboBox *target, vector<string> items)
 
 void offline::InitEvent()
 {
-    connect(cbox_bg, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(bgModel()));
+    connect(cbox_bg, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(bgSubtraction()));
     connect(cbox_od, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(od_alg_clicked(const  QString &)));
-    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_hog()));
-    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_dpm()));
-    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_faster_rcnn()));
-    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_ssd()));
-    connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_yolo()));
+
+    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_hog()));
+    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_dpm()));
+    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_faster_rcnn()));
+    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_ssd()));
+    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_yolo()));
 }
 
 
 
-void offline::od_alg_clicked(const QString od_alg){
+void offline::od_alg_clicked(const QString od_alg)
+{
 
-    if(od_alg=="HOG+SVM"){
+    if(od_alg=="HOG+SVM")
+    {
         emit offline::od_alg_hog();
-   }
-    else if(od_alg=="DPM"){
+    }
+    else if(od_alg=="DPM")
+    {
         emit offline::od_alg_dpm();
-   }
-    else if(od_alg=="Faster R-CNN"){
+    }
+    else if(od_alg=="Faster R-CNN")
+    {
         emit offline::od_alg_faster_rcnn();
-   }
-    else if(od_alg=="SSD"){
+    }
+    else if(od_alg=="SSD")
+    {
         emit offline::od_alg_ssd();
-   }
-    else if(od_alg=="YOLO"){
-
+    }
+    else if(od_alg=="YOLO")
+    {
         //QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("yolo"));
         emit offline::od_alg_yolo();
     }
-
-
 }
 
 
@@ -128,22 +134,22 @@ void offline::on_btn_back_clicked()
 //open file
 void offline::on_btn_open_clicked()
 {
-
-
-    if (capture.isOpened()){
+    if (capture.isOpened())
+    {
         capture.release();     //decide if capture is already opened; if so,close it
-        fileName = "";
+        filePath = "";
     }
-        fileName =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
-        ui->text_dir->setText(fileName);
-        QFileInfo fileinfo=QFileInfo(fileName);
+        filePath =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
+        ui->text_dir->setText(filePath);
+        QFileInfo fileinfo=QFileInfo(filePath);
         fileSuffix=fileinfo.suffix();
         //ui->text_dir->setText(fileSuffix);
-        if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" ){
+        if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" )
+        {
             videoFlag = 0;
             //static const int kInpWidth = 960;
             //static const int kInpHeight = 576;
-            cv::Mat image = cv::imread(fileName.toLatin1().data());
+            cv::Mat image = cv::imread(filePath.toLatin1().data());
            // cv::resize(image, image, Size(kInpWidth, kInpHeight));
             QImage img = offline::Mat2QImage(image);
             ui->label_play->setPixmap(QPixmap::fromImage(img));
@@ -151,18 +157,19 @@ void offline::on_btn_open_clicked()
             //ui->label_play->setAlignment(Qt::AlignVCenter);
 
         }
-        else{
+        else
+        {
             videoFlag = 1;
-            //capture.open(fileName.toLocal8Bit().data());
-
-            g_reader = cv::cudacodec::createVideoReader(fileName.toStdString());
-            g_reader->nextFrame(g_frame);
-            rate = 30;
-            //if (capture.isOpened())
-            //{
-                //rate= capture.get(CV_CAP_PROP_FPS);
-                //capture >> frame;
-                if (!g_frame.empty())
+            capture.open(filePath.toStdString());
+            //GPU
+            //g_reader = cv::cudacodec::createVideoReader(filePath.toStdString());
+            //g_reader->nextFrame(g_frame);
+            //rate = 30;
+            if (capture.isOpened())
+            {
+                rate= capture.get(CV_CAP_PROP_FPS);
+                capture >> frame;
+                if (!frame.empty())
                 {
                     image = Mat2QImage(frame);
                     ui->label_play->setPixmap(QPixmap::fromImage(image));
@@ -173,6 +180,7 @@ void offline::on_btn_open_clicked()
                     timer->start();
                 }
             }
+        }
 
 
 }
@@ -221,7 +229,7 @@ QImage offline::Mat2QImage(cv::Mat cvImg)
 
 }
 
-void offline::bgModel()
+void offline::bgSubtraction()
 {
 
     if (videoFlag==1){
@@ -251,7 +259,7 @@ void offline::bgModel()
 
 void offline::od_alg_hog()
 {
-    String file = fileName.toStdString();
+    String file = filePath.toStdString();
     cv::Mat image = cv::imread(file);
     if (image.empty())
     {
@@ -282,7 +290,7 @@ void offline::od_alg_hog()
 void offline::od_alg_dpm()
 {
     String dpm_model_path = "../../models/detection/dpm/inriaperson.xml";
-    String dpm_image_dir = fileName.toStdString();
+    String dpm_image_dir = filePath.toStdString();
 
     if (dpm_model_path.empty() || dpm_image_dir.empty()){
         QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
@@ -332,7 +340,7 @@ void offline::od_alg_faster_rcnn()
 
 
 
-    if(fileName == NULL)
+    if(filePath == NULL)
         QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空,请打开一张图片"));
     else if(videoFlag == 1){
         QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为视频文件,请打开一张图片"));
@@ -340,7 +348,7 @@ void offline::od_alg_faster_rcnn()
     else{
         String protoPath = "../../models/detection/faster_rcnn/faster_rcnn_vgg16.prototxt";
         String modelPath = "../../models/detection/faster_rcnn/VGG16_faster_rcnn_final.caffemodel";
-        String imagePath = fileName.toStdString();
+        String imagePath = filePath.toStdString();
         float confThreshold = 0.8;
         CV_Assert(!protoPath.empty(), !modelPath.empty(), !imagePath.empty());
 
@@ -400,13 +408,9 @@ void offline::od_alg_ssd()
                                 "cow", "diningtable", "dog", "horse",
                                 "motorbike", "person", "pottedplant",
                                 "sheep", "sofa", "train", "tvmonitor"};
-
-
-
     String modelConfiguration = "../../models/detection/ssd/deploy.prototxt";
     String modelBinary = "../../models/detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
     //String filePath = "../../videos/original.mp4";
-    String filePath = fileName.toStdString();
     //int cameraDevice = 0;
     float min_confidence = 0.5;
     //! [Initialize network]
@@ -417,114 +421,36 @@ void offline::od_alg_ssd()
     {
         QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载配置文件"));
     }
-    if (videoFlag==1){
+    if (videoFlag==1)
+    {
         timer->stop();
         for(;;)
         {
-        //capture>>frame;
-           g_reader->nextFrame(frame);
-
-            if (frame.empty())
+            Mat ssdFrame;
+            capture>>ssdFrame;
+           //g_reader->nextFrame(frame);
+            if (ssdFrame.empty())
             {
             waitKey();
             break;      
-            }
-
-        if (frame.channels() == 4)
-            cvtColor(frame, frame, COLOR_BGRA2BGR);
-
-
-        //! [Prepare blob]
-        Mat inputBlob = blobFromImage(frame, 1.0f, Size(300, 300), Scalar(104, 117, 123), false, false); //Convert Mat to batch of images
-        //! [Prepare blob]
-
-        //! [Set input blob]
-        net.setInput(inputBlob, "data"); //set the network input
-        //! [Set input blob]
-
-        //! [Make forward pass]
-        Mat detection = net.forward("detection_out"); //compute output
-        //! [Make forward pass]
-
-        vector<double> layersTimings;
-        double freq = getTickFrequency() / 1000;
-        double time = net.getPerfProfile(layersTimings) / freq;
-        ostringstream ss;
-        ss << "FPS: " << 1000/time << " ; time: " << time << " ms";
-        putText(frame, ss.str(), Point(20,20), 0, 0.5, Scalar(0,0,255));
-
-        Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
-
-        float confidenceThreshold = min_confidence;
-        for(int i = 0; i < detectionMat.rows; i++)
-        {
-            float confidence = detectionMat.at<float>(i, 2);
-
-            if(confidence > confidenceThreshold)
-            {
-                size_t objectClass = (size_t)(detectionMat.at<float>(i, 1));
-
-                int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
-                int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
-                int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
-                int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
-
-                ss.str("");
-                ss << confidence;
-                String conf(ss.str());
-
-                Rect object(xLeftBottom, yLeftBottom,
-                            xRightTop - xLeftBottom,
-                            yRightTop - yLeftBottom);
-
-                rectangle(frame, object, Scalar(0, 255, 0));
-                String label = String(classNames[objectClass]) + ": " + conf;
-                int baseLine = 0;
-                Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-                rectangle(frame, Rect(Point(xLeftBottom, yLeftBottom - labelSize.height),
-                                      Size(labelSize.width, labelSize.height + baseLine)),
-                          Scalar(255, 255, 255), FILLED);
-                putText(frame, label, Point(xLeftBottom, yLeftBottom),
-                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
-            }
-        }
-
-        //imshow("detections", frame);
-        //if (waitKey(1) >= 0) break;
-        //cv::resize(frame, frame, Size(kInpWidth, kInpHeight));
-        image=offline::Mat2QImage(frame);
-        ui->label_play->setPixmap(QPixmap::fromImage(image));
-        ui->label_play->setAlignment(Qt::AlignCenter);
-        if (waitKey(1) >= 0) break;
-        }
-
-    }
-    else {
-        Mat ssd_frame;
-        ssd_frame = imread(filePath);
-
-        if(!ssd_frame.data)
-            {
-                QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空，请打开一张图片或一段视频"));
-                //QMessageBox msgBox;
-                //msgBox.setText(tr("Image Data Is Null"));
-                //msgBox.exec();
-            }
-            else {
-            if (ssd_frame.channels() == 4)
-                cvtColor(ssd_frame, ssd_frame, COLOR_BGRA2BGR);
-
-
+            }        
+            if (ssdFrame.channels() == 4)
+            cvtColor(ssdFrame, ssdFrame, COLOR_BGRA2BGR);
             //! [Prepare blob]
-            Mat inputBlob = blobFromImage(ssd_frame, 1.0f, Size(300, 300), Scalar(104, 117, 123), false, false); //Convert Mat to batch of images
+            Mat inputBlob = blobFromImage(ssdFrame, 1.0f, Size(300, 300), Scalar(104, 117, 123), false, false); //Convert Mat to batch of images
             //! [Prepare blob]
 
             //! [Set input blob]
+
             net.setInput(inputBlob, "data"); //set the network input
+
             //! [Set input blob]
+
 
             //! [Make forward pass]
+
             Mat detection = net.forward("detection_out"); //compute output
+
             //! [Make forward pass]
 
             vector<double> layersTimings;
@@ -532,7 +458,7 @@ void offline::od_alg_ssd()
             double time = net.getPerfProfile(layersTimings) / freq;
             ostringstream ss;
             ss << "FPS: " << 1000/time << " ; time: " << time << " ms";
-            putText(ssd_frame, ss.str(), Point(20,20), 0, 0.5, Scalar(0,0,255));
+            putText(ssdFrame, ss.str(), Point(20,20), 0, 0.5, Scalar(0,0,255));
 
             Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
@@ -545,34 +471,124 @@ void offline::od_alg_ssd()
                 {
                     size_t objectClass = (size_t)(detectionMat.at<float>(i, 1));
 
-                    int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * ssd_frame.cols);
-                    int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * ssd_frame.rows);
-                    int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * ssd_frame.cols);
-                    int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * ssd_frame.rows);
+                    int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * ssdFrame.cols);
+                    int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * ssdFrame.rows);
+                    int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * ssdFrame.cols);
+                    int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * ssdFrame.rows);
 
                     ss.str("");
                     ss << confidence;
                     String conf(ss.str());
 
                     Rect object(xLeftBottom, yLeftBottom,
-                                xRightTop - xLeftBottom,
-                                yRightTop - yLeftBottom);
+                            xRightTop - xLeftBottom,
+                            yRightTop - yLeftBottom);
 
-                    rectangle(ssd_frame, object, Scalar(0, 255, 0));
+                    rectangle(ssdFrame, object, Scalar(0, 255, 0));
                     String label = String(classNames[objectClass]) + ": " + conf;
                     int baseLine = 0;
                     Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-                    rectangle(ssd_frame, Rect(Point(xLeftBottom, yLeftBottom - labelSize.height),
-                                          Size(labelSize.width, labelSize.height + baseLine)),
-                              Scalar(255, 255, 255), FILLED);
-                    putText(ssd_frame, label, Point(xLeftBottom, yLeftBottom),
-                            FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+                    rectangle(ssdFrame, Rect(Point(xLeftBottom, yLeftBottom - labelSize.height),
+                                      Size(labelSize.width, labelSize.height + baseLine)),
+                          Scalar(255, 255, 255), FILLED);
+                    putText(ssdFrame, label, Point(xLeftBottom, yLeftBottom),
+                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
                 }
             }
-            QImage ssd_image;
-            ssd_image=offline::Mat2QImage(ssd_frame);
-            ui->label_play->setPixmap(QPixmap::fromImage(ssd_image));
+
+            //imshow("detections", ssdFrame);
+            //if (waitKey(1) >= 0) break;
+            //cv::resize(ssdFrame, ssdFrame, Size(kInpWidth, kInpHeight));
+            QImage ssdQImage;
+            ssdQImage=offline::Mat2QImage(ssdFrame);
+            ui->label_play->setPixmap(QPixmap::fromImage(ssdQImage));
             ui->label_play->setAlignment(Qt::AlignCenter);
+            if (waitKey(1) >= 0) break;
+            }
+        }
+        else {
+            Mat ssdImage;
+            String ssdImagePath = filePath.toStdString();
+            ssdImage = imread(ssdImagePath);
+            if(!ssdImage.data)
+            {
+                QMessageBox::information(this,QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空，请打开一张图片或一段视频"));
+                //QMessageBox msgBox;
+                //msgBox.setText(tr("Image Data Is Null"));
+                //msgBox.exec();
+            }
+
+            else
+            {
+                if (ssdImage.channels() == 4)
+                cvtColor(ssdImage, ssdImage, COLOR_BGRA2BGR);
+                //clock_t t_ssd_1 = clock();
+                //! [Prepare blob]
+                Mat inputBlob = blobFromImage(ssdImage, 1.0f, Size(300, 300), Scalar(104, 117, 123), false, false); //Convert Mat to batch of images
+                //! [Prepare blob]
+                //clock_t t_ssd_2 =clock();
+                //! [Set input blob]
+                net.setInput(inputBlob, "data"); //set the network input
+                //! [Set input blob]
+                //clock_t t_ssd_3 =clock();
+
+                //! [Make forward pass]
+                Mat detection = net.forward("detection_out"); //compute output
+                //! [Make forward pass]
+                //clock_t t_ssd_4 =clock();
+                //double time_resize=(double)(t_ssd_2 - t_ssd_1);
+                //double time_intput=(double)(t_ssd_3 - t_ssd_2);
+                //double time_detection=(double)(t_ssd_4 - t_ssd_3);
+
+                vector<double> layersTimings;
+                double freq = getTickFrequency() / 1000;
+                double time = net.getPerfProfile(layersTimings) / freq;
+                ostringstream ss;
+                ss << "FPS: " << 1000/time << " ; time: " << time << "ms";
+                putText(ssdImage, ss.str(), Point(20,20), 0, 0.5, Scalar(0,0,255));
+
+                Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
+
+                float confidenceThreshold = min_confidence;
+                for(int i = 0; i < detectionMat.rows; i++)
+                {
+                    float confidence = detectionMat.at<float>(i, 2);
+                    if(confidence > confidenceThreshold)
+                    {
+                        size_t objectClass = (size_t)(detectionMat.at<float>(i, 1));
+
+                        int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * ssdImage.cols);
+                        int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * ssdImage.rows);
+                        int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * ssdImage.cols);
+                        int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * ssdImage.rows);
+
+                        ss.str("");
+                        ss << confidence;
+                        String conf(ss.str());
+
+                        Rect object(xLeftBottom, yLeftBottom,
+                                    xRightTop - xLeftBottom,
+                                    yRightTop - yLeftBottom);
+
+                        rectangle(ssdImage, object, Scalar(0, 255, 0));
+                        String label = String(classNames[objectClass]) + ": " + conf;
+                        int baseLine = 0;
+                        Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+                        rectangle(ssdImage, Rect(Point(xLeftBottom, yLeftBottom - labelSize.height),
+                                              Size(labelSize.width, labelSize.height + baseLine)),
+                                  Scalar(255, 255, 255), FILLED);
+                        putText(ssdImage, label, Point(xLeftBottom, yLeftBottom),
+                                FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+                    }
+                }
+                QImage ssdQImage;
+                ssdQImage=offline::Mat2QImage(ssdImage);
+                ui->label_play->setPixmap(QPixmap::fromImage(ssdQImage));
+                ui->label_play->setAlignment(Qt::AlignCenter);
+
+//              ui->label_info->setText("time_resize="+QString::number(time_resize,'f',6)+'\n'+
+//                                    "time_input="+QString::number(time_intput,'f',6)+'\n'+
+//                                    "time_detection="+QString::number(time_detection,'f',6)+'\n');
 
             }
     }
@@ -583,13 +599,14 @@ void offline::od_alg_yolo()
 {
     String modelConfiguration = "../../models/detection/yolo/yolov2.cfg";
     String modelBinary = "../../models/detection/yolo/yolov2.weights";
-    String class_names ="../../models/detection/yolo/coco.names";
-    String source = fileName.toStdString();
-    String  out = "../../images/output.jpg";
+    String classNames ="../../models/detection/yolo/coco.names";
+    //String source = filePath.toStdString();
+    //String  out = "../../images/output.jpg";
     String object_roi_style = "box";   // box or line style draw
-    int cameraDevice = 0;
-    double fps = 3;
+    //int cameraDevice = 0;
+    //double fps = 3;
     float confidenceThreshold = 0.24;
+
 
     //! [Initialize network]
     dnn::Net net = readNetFromDarknet(modelConfiguration, modelBinary);
@@ -601,132 +618,171 @@ void offline::od_alg_yolo()
 
     }
 
-    VideoCapture cap;
-    VideoWriter writer;
-    int codec = CV_FOURCC('M', 'J', 'P', 'G');
-
-    if (source.empty())
-    {
-
-        cap = VideoCapture(cameraDevice);
-        if(!cap.isOpened())
-        {
-           QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法打开camera 0"));
-           //QMessageBox::information(this, QString::fromLocal8Bit("错误")),QString::fromLocal8Bit("无法打开camera 0"));
-        }
-    }
-    else
-    {
-
-        cap.open(source);
-        if(!cap.isOpened())
-        {
-           QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法打开当前路径文件"));
-           //QMessageBox::information(this,QString::fromLocal8Bit("错误")),QString::fromLocal8Bit("无法打开当前路径文件"));
-    }
-
-    if(out.empty())
-    {
-        writer.open(out, codec, fps, Size((int)cap.get(CAP_PROP_FRAME_WIDTH),(int)cap.get(CAP_PROP_FRAME_HEIGHT)), 1);
-    }
-
     vector<String> classNamesVec;
-
-    ifstream classNamesFile(class_names.c_str());
+    ifstream classNamesFile(classNames.c_str());
     if (classNamesFile.is_open())
     {
         string className = "";
         while (std::getline(classNamesFile, className))
             classNamesVec.push_back(className);
     }
-
-
-
-    for(;;)
+    if(videoFlag==1)
     {
-        Mat frame;
-        cap >> frame; // get a new frame from camera/video or read image
-
-        if (frame.empty())
+        timer->stop();
+        for(;;)
         {
+            Mat yoloFrame;
+            capture >> yoloFrame; // get a new frame from video
+            if (yoloFrame.empty())
+            {
             waitKey();
             break;
-        }
-
-        if (frame.channels() == 4)
-            cvtColor(frame, frame, COLOR_BGRA2BGR);
-
-        //! [Prepare blob]
-        Mat inputBlob = blobFromImage(frame, 1 / 255.F, Size(416, 416), Scalar(), true, false); //Convert Mat to batch of images
-        //! [Prepare blob]
-
-        //! [Set input blob]
-        net.setInput(inputBlob, "data");                   //set the network input
-        //! [Set input blob]
-
-        //! [Make forward pass]
-        Mat detectionMat = net.forward("detection_out");   //compute output
-        //! [Make forward pass]
-
-        vector<double> layersTimings;
-        double tick_freq = getTickFrequency();
-        double time_ms = net.getPerfProfile(layersTimings) / tick_freq * 1000;
-        putText(frame, format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
-                Point(20, 20), 0, 0.5, Scalar(0, 0, 255));
-
-
-        for (int i = 0; i < detectionMat.rows; i++)
-        {
-            const int probability_index = 5;
-            const int probability_size = detectionMat.cols - probability_index;
-            float *prob_array_ptr = &detectionMat.at<float>(i, probability_index);
-
-            size_t objectClass = max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
-            float confidence = detectionMat.at<float>(i, (int)objectClass + probability_index);
-
-            if (confidence > confidenceThreshold)
-            {
-                float x_center = detectionMat.at<float>(i, 0) * frame.cols;
-                float y_center = detectionMat.at<float>(i, 1) * frame.rows;
-                float width = detectionMat.at<float>(i, 2) * frame.cols;
-                float height = detectionMat.at<float>(i, 3) * frame.rows;
-                Point p1(cvRound(x_center - width / 2), cvRound(y_center - height / 2));
-                Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
-                Rect object(p1, p2);
-
-                Scalar object_roi_color(0, 255, 0);
-
-                if (object_roi_style == "box")
-                {
-                    rectangle(frame, object, object_roi_color);
-                }
-                else
-                {
-                    Point p_center(cvRound(x_center), cvRound(y_center));
-                    line(frame, object.tl(), p_center, object_roi_color, 1);
-                }
-
-                String className = objectClass < classNamesVec.size() ? classNamesVec[objectClass] : cv::format("unknown(%d)", objectClass);
-                String label = format("%s: %.2f", className.c_str(), confidence);
-                int baseLine = 0;
-                Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-                rectangle(frame, Rect(p1, Size(labelSize.width, labelSize.height + baseLine)),
-                          object_roi_color, FILLED);
-                putText(frame, label, p1 + Point(0, labelSize.height),
-                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
             }
-        }
-        if(writer.isOpened())
-        {
-            writer.write(frame);
-        }
+            if (yoloFrame.channels() == 4)
+            cvtColor(yoloFrame, yoloFrame, COLOR_BGRA2BGR);
 
-        QImage img=offline::Mat2QImage(frame);
-        ui->label_play->setPixmap(QPixmap::fromImage(img));
-        ui->label_play->setAlignment(Qt::AlignCenter);
+            //! [Prepare blob]
+            Mat inputBlob = blobFromImage(yoloFrame, 1 / 255.F, Size(416, 416), Scalar(), true, false); //Convert Mat to batch of images
+            //! [Prepare blob]
+
+            //! [Set input blob]
+            net.setInput(inputBlob, "data");                   //set the network input
+            //! [Set input blob]
+
+            //! [Make forward pass]
+            Mat detectionMat = net.forward("detection_out");   //compute output
+            //! [Make forward pass]
+
+            vector<double> layersTimings;
+            double tick_freq = getTickFrequency();
+            double time_ms = net.getPerfProfile(layersTimings) / tick_freq * 1000;
+            putText(yoloFrame, format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
+                    Point(20, 20), 0, 0.5, Scalar(0, 0, 255));
+            for (int i = 0; i < detectionMat.rows; i++)
+            {
+                const int probability_index = 5;
+                const int probability_size = detectionMat.cols - probability_index;
+                float *prob_array_ptr = &detectionMat.at<float>(i, probability_index);
+
+                size_t objectClass = max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
+                float confidence = detectionMat.at<float>(i, (int)objectClass + probability_index);
+
+                if (confidence > confidenceThreshold)
+                {
+                    float x_center = detectionMat.at<float>(i, 0) * yoloFrame.cols;
+                    float y_center = detectionMat.at<float>(i, 1) * yoloFrame.rows;
+                    float width = detectionMat.at<float>(i, 2) * yoloFrame.cols;
+                    float height = detectionMat.at<float>(i, 3) * yoloFrame.rows;
+                    Point p1(cvRound(x_center - width / 2), cvRound(y_center - height / 2));
+                    Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
+                    Rect object(p1, p2);
+
+                    Scalar object_roi_color(0, 255, 0);
+
+                    if (object_roi_style == "box")
+                    {
+                        rectangle(yoloFrame, object, object_roi_color);
+                    }
+                    else
+                    {
+                        Point p_center(cvRound(x_center), cvRound(y_center));
+                        line(yoloFrame, object.tl(), p_center, object_roi_color, 1);
+                    }
+
+                    String className = objectClass < classNamesVec.size() ? classNamesVec[objectClass] : cv::format("unknown(%d)", objectClass);
+                    String label = format("%s: %.2f", className.c_str(), confidence);
+                    int baseLine = 0;
+                    Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+                    rectangle(yoloFrame, Rect(p1, Size(labelSize.width, labelSize.height + baseLine)),
+                              object_roi_color, FILLED);
+                    putText(yoloFrame, label, p1 + Point(0, labelSize.height),
+                            FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+                }
+            }
+
+            QImage yoloQImage=offline::Mat2QImage(yoloFrame);
+            ui->label_play->setPixmap(QPixmap::fromImage(yoloQImage));
+            ui->label_play->setAlignment(Qt::AlignCenter);
+
+
+        }
     }
 
-}
+    else
+    {
+
+       Mat yoloImage;
+       String yoloImagePath=filePath.toStdString();
+       yoloImage=imread(yoloImagePath);
+
+       if (yoloImage.channels() == 4)
+       cvtColor(yoloImage, yoloImage, COLOR_BGRA2BGR);
+
+       //! [Prepare blob]
+       Mat inputBlob = blobFromImage(yoloImage, 1 / 255.F, Size(416, 416), Scalar(), true, false); //Convert Mat to batch of images
+       //! [Prepare blob]
+
+       //! [Set input blob]
+       net.setInput(inputBlob, "data");                   //set the network input
+       //! [Set input blob]
+
+       //! [Make forward pass]
+       Mat detectionMat = net.forward("detection_out");   //compute output
+       //! [Make forward pass]
+
+       vector<double> layersTimings;
+       double tick_freq = getTickFrequency();
+       double time_ms = net.getPerfProfile(layersTimings) / tick_freq * 1000;
+       putText(yoloImage, format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
+               Point(20, 20), 0, 0.5, Scalar(0, 0, 255));
+       for (int i = 0; i < detectionMat.rows; i++)
+       {
+           const int probability_index = 5;
+           const int probability_size = detectionMat.cols - probability_index;
+           float *prob_array_ptr = &detectionMat.at<float>(i, probability_index);
+
+           size_t objectClass = max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
+           float confidence = detectionMat.at<float>(i, (int)objectClass + probability_index);
+
+           if (confidence > confidenceThreshold)
+           {
+               float x_center = detectionMat.at<float>(i, 0) * yoloImage.cols;
+               float y_center = detectionMat.at<float>(i, 1) * yoloImage.rows;
+               float width = detectionMat.at<float>(i, 2) * yoloImage.cols;
+               float height = detectionMat.at<float>(i, 3) * yoloImage.rows;
+               Point p1(cvRound(x_center - width / 2), cvRound(y_center - height / 2));
+               Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
+               Rect object(p1, p2);
+
+               Scalar object_roi_color(0, 255, 0);
+
+               if (object_roi_style == "box")
+               {
+                   rectangle(yoloImage, object, object_roi_color);
+               }
+               else
+               {
+                   Point p_center(cvRound(x_center), cvRound(y_center));
+                   line(yoloImage, object.tl(), p_center, object_roi_color, 1);
+               }
+
+               String className = objectClass < classNamesVec.size() ? classNamesVec[objectClass] : cv::format("unknown(%d)", objectClass);
+               String label = format("%s: %.2f", className.c_str(), confidence);
+               int baseLine = 0;
+               Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+               rectangle(yoloImage, Rect(p1, Size(labelSize.width, labelSize.height + baseLine)),
+                         object_roi_color, FILLED);
+               putText(yoloImage, label, p1 + Point(0, labelSize.height),
+                       FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+           }
+       }
+
+       QImage yoloQImage=offline::Mat2QImage(yoloImage);
+       ui->label_play->setPixmap(QPixmap::fromImage(yoloQImage));
+       ui->label_play->setAlignment(Qt::AlignCenter);
+    }
+
+
 }
 
 
