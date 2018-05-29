@@ -137,19 +137,22 @@ void offline::on_btn_open_clicked()
     if (capture.isOpened())
     {
         capture.release();     //decide if capture is already opened; if so,close it
-        filePath = "";
+        //filePath = "";
     }
         filePath =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
+
         ui->text_dir->setText(filePath);
-        QFileInfo fileinfo=QFileInfo(filePath);
-        fileSuffix=fileinfo.suffix();
+
+
+        QFileInfo fileInfo=QFileInfo(filePath);
+        fileSuffix=fileInfo.suffix();
         //ui->text_dir->setText(fileSuffix);
         if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" )
         {
             videoFlag = 0;
             //static const int kInpWidth = 960;
             //static const int kInpHeight = 576;
-            cv::Mat image = cv::imread(filePath.toLatin1().data());
+            cv::Mat image = cv::imread(filePath.toStdString());
            // cv::resize(image, image, Size(kInpWidth, kInpHeight));
             QImage img = offline::Mat2QImage(image);
             ui->label_play->setPixmap(QPixmap::fromImage(img));
@@ -231,28 +234,25 @@ QImage offline::Mat2QImage(cv::Mat cvImg)
 
 void offline::bgSubtraction()
 {
-
-    if (videoFlag==1){
+    if (videoFlag==1)
+    {
         timer->stop();
         Mat fgmask;
-        while(capture.read(frame)){
-        if (frame.empty())
+        while(capture.read(frame))
         {
-            waitKey();
-            break;
-        }
-
-        if (frame.channels() == 4)
-            cvtColor(frame, frame, COLOR_BGRA2BGR);
-
-
-        Ptr<BackgroundSubtractor> bg_model = createBackgroundSubtractorMOG2();
-        bg_model->apply(frame, fgmask);
-
-        image=offline::Mat2QImage(fgmask);
-        ui->label_play->setPixmap(QPixmap::fromImage(image));
-        ui->label_play->setAlignment(Qt::AlignCenter);
-        if (waitKey(1) >= 0) break;
+            if (frame.empty())
+            {
+                waitKey();
+                break;
+            }
+            if (frame.channels() == 4)
+            cvtColor(frame, frame, COLOR_BGRA2BGR);        
+            Ptr<BackgroundSubtractor> bg_model = createBackgroundSubtractorMOG2();
+            bg_model->apply(frame, fgmask);
+            image=offline::Mat2QImage(fgmask);
+            ui->label_play->setPixmap(QPixmap::fromImage(image));
+            ui->label_play->setAlignment(Qt::AlignCenter);
+            if (waitKey(1) >= 0) break;
         }
     }
 }
@@ -457,7 +457,7 @@ void offline::od_alg_ssd()
             double freq = getTickFrequency() / 1000;
             double time = net.getPerfProfile(layersTimings) / freq;
             ostringstream ss;
-            ss << "FPS: " << 1000/time << " ; time: " << time << " ms";
+            ss << "SSD FPS: " << 1000/time << " ; time: " << time << " ms";
             putText(ssdFrame, ss.str(), Point(20,20), 0, 0.5, Scalar(0,0,255));
 
             Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
@@ -629,17 +629,22 @@ void offline::od_alg_yolo()
     if(videoFlag==1)
     {
         timer->stop();
+        //capture.release();
+        //VideoCapture cap;
+        //cap.open("/home/mmap/work/VisionAlgShow/videos/1026.mp4");
         for(;;)
         {
             Mat yoloFrame;
-            capture >> yoloFrame; // get a new frame from video
+            capture >> yoloFrame; // get a new frame from camera/video or read image
+
             if (yoloFrame.empty())
             {
-            waitKey();
-            break;
+                waitKey();
+                break;
             }
+
             if (yoloFrame.channels() == 4)
-            cvtColor(yoloFrame, yoloFrame, COLOR_BGRA2BGR);
+                cvtColor(yoloFrame, yoloFrame, COLOR_BGRA2BGR);
 
             //! [Prepare blob]
             Mat inputBlob = blobFromImage(yoloFrame, 1 / 255.F, Size(416, 416), Scalar(), true, false); //Convert Mat to batch of images
@@ -656,8 +661,10 @@ void offline::od_alg_yolo()
             vector<double> layersTimings;
             double tick_freq = getTickFrequency();
             double time_ms = net.getPerfProfile(layersTimings) / tick_freq * 1000;
-            putText(yoloFrame, format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
+            putText(yoloFrame, format("YOLO FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
                     Point(20, 20), 0, 0.5, Scalar(0, 0, 255));
+
+            //float confidenceThreshold = parser.get<float>("min_confidence");
             for (int i = 0; i < detectionMat.rows; i++)
             {
                 const int probability_index = 5;
@@ -700,9 +707,13 @@ void offline::od_alg_yolo()
                 }
             }
 
+            //imshow("YOLO: Detections", frame);
+            //if (waitKey(1) >= 0) break;
+
             QImage yoloQImage=offline::Mat2QImage(yoloFrame);
             ui->label_play->setPixmap(QPixmap::fromImage(yoloQImage));
             ui->label_play->setAlignment(Qt::AlignCenter);
+            if (waitKey(1) >= 0) break;
 
 
         }
