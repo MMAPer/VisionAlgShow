@@ -21,19 +21,19 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
-    <number>1</number>
+    <number>0</number>
    </property>
    <property name="topMargin">
-    <number>1</number>
+    <number>0</number>
    </property>
    <property name="rightMargin">
-    <number>1</number>
+    <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>1</number>
+    <number>0</number>
    </property>
    <property name="spacing">
-    <number>1</number>
+    <number>0</number>
    </property>
    <item row="0" column="0">
     <widget class="QWidget" name="widge_title" native="true">
@@ -55,89 +55,11 @@
      <property name="styleSheet">
       <string notr="true">background-color:#78b4e3;</string>
      </property>
-     <widget class="QLabel" name="label_ico">
-      <property name="geometry">
-       <rect>
-        <x>1</x>
-        <y>5</y>
-        <width>30</width>
-        <height>50</height>
-       </rect>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>30</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_title">
-      <property name="geometry">
-       <rect>
-        <x>35</x>
-        <y>5</y>
-        <width>104</width>
-        <height>50</height>
-       </rect>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="font">
-       <font>
-        <family>微软雅黑</family>
-        <pointsize>10</pointsize>
-        <weight>50</weight>
-        <italic>false</italic>
-        <bold>false</bold>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">font:10pt &quot;微软雅黑&quot;;</string>
-      </property>
-      <property name="text">
-       <string>本地视频文件处理</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="btn_back">
-      <property name="geometry">
-       <rect>
-        <x>1124</x>
-        <y>14</y>
-        <width>80</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="text">
-       <string>返回</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="label_dir">
       <property name="geometry">
        <rect>
-        <x>200</x>
-        <y>13</y>
+        <x>60</x>
+        <y>10</y>
         <width>60</width>
         <height>30</height>
        </rect>
@@ -152,14 +74,14 @@
        <string notr="true">color:white;</string>
       </property>
       <property name="text">
-       <string>文件路径</string>
+       <string>当前路径</string>
       </property>
      </widget>
      <widget class="QPushButton" name="btn_open">
       <property name="geometry">
        <rect>
-        <x>720</x>
-        <y>13</y>
+        <x>590</x>
+        <y>10</y>
         <width>80</width>
         <height>31</height>
        </rect>
@@ -177,8 +99,8 @@
      <widget class="QLineEdit" name="text_dir">
       <property name="geometry">
        <rect>
-        <x>270</x>
-        <y>13</y>
+        <x>130</x>
+        <y>10</y>
         <width>441</width>
         <height>30</height>
        </rect>
@@ -258,56 +180,6 @@
            <string notr="true">background-color:white;color:black;</string>
           </property>
          </widget>
-         <widget class="QLabel" name="lab_od">
-          <property name="geometry">
-           <rect>
-            <x>1</x>
-            <y>90</y>
-            <width>90</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">color:black;</string>
-          </property>
-          <property name="text">
-           <string>目标检测</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-         <widget class="QLabel" name="lab_bg">
-          <property name="geometry">
-           <rect>
-            <x>1</x>
-            <y>10</y>
-            <width>90</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">color:black;</string>
-          </property>
-          <property name="text">
-           <string>背景建模</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
          <widget class="QComboBox" name="cbox_bg">
           <property name="geometry">
            <rect>
@@ -321,31 +193,6 @@
            <string notr="true">background-color:white;color:black;</string>
           </property>
          </widget>
-         <widget class="QLabel" name="lab_sot">
-          <property name="geometry">
-           <rect>
-            <x>1</x>
-            <y>170</y>
-            <width>90</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">color:black;</string>
-          </property>
-          <property name="text">
-           <string>单目标跟踪</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
          <widget class="QComboBox" name="cbox_sot">
           <property name="geometry">
            <rect>
@@ -357,31 +204,6 @@
           </property>
           <property name="styleSheet">
            <string notr="true">background-color:white;color:black;</string>
-          </property>
-         </widget>
-         <widget class="QLabel" name="lab_sm">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>250</y>
-            <width>90</width>
-            <height>20</height>
-           </rect>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">color:black;</string>
-          </property>
-          <property name="text">
-           <string>衣物解析</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
           </property>
          </widget>
          <widget class="QComboBox" name="cbox_sm">

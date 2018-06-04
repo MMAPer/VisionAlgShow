@@ -19,10 +19,10 @@
 #include <opencv2/dpm.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/video/background_segm.hpp>
-#include <opencv2/cudacodec.hpp>
+//#include <opencv2/cudacodec.hpp>
 #include <iostream>
 #include <time.h>
-#include<opencv2/cudaimgproc.hpp>
+//#include<opencv2/cudaimgproc.hpp>
 using namespace cv;
 using namespace dnn;
 using namespace std;
@@ -52,26 +52,38 @@ void offline::InitStyle()
 
     this->setStyleSheet("QGroupBox#gboxMain{border-width:0px;}");
     this->setProperty("Form", true);
-    this->setWindowFlags(Qt::FramelessWindowHint |
-                         Qt::WindowSystemMenuHint |
-                         Qt::WindowMinMaxButtonsHint);
+//  this->setWindowFlags(Qt::FramelessWindowHint |
+//                         Qt::WindowSystemMenuHint |
+//                         Qt::WindowMinMaxButtonsHint);
+    this->setWindowFlags(Qt::Widget);
 
-    IconHelper::Instance()->SetIcon(ui->label_ico, QChar(0xf03d), 11);
-
-    ui->label_title->setText("本地视频文件处理");
+    //IconHelper::Instance()->SetIcon(ui->label_ico, QChar(0xf03d), 11);
+    //ui->label_title->setText("本地视频文件处理");
     this->setWindowTitle("本地视频文件处理");
 
     //背景建模
     cbox_bg = ui->cbox_bg;
-    string str_bg[] = {"请选择", "KNN", "MOG2"};
+    string str_bg[] = {"背景建模", "KNN", "MOG2"};
     vector<string> alg_bg(str_bg, str_bg+3);
     addCboxItem(cbox_bg, alg_bg);
 
     //目标检测
     cbox_od = ui->cbox_od;
-    string str_od[] = {"请选择", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
+    string str_od[] = {"目标检测", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
     vector<string> alg_od(str_od, str_od+6);
     addCboxItem(cbox_od, alg_od);
+
+    //目标跟踪
+    cbox_sot = ui->cbox_sot;
+    string str_sot[] = {"单目标跟踪"};
+    vector<string> alg_sot(str_sot, str_sot+1);
+    addCboxItem(cbox_sot, alg_sot);
+
+    //衣服解析
+    cbox_sm = ui->cbox_sm;
+    string str_sm[] = {"衣服解析"};
+    vector<string> alg_sm(str_sm, str_sm+1);
+    addCboxItem(cbox_sm, alg_sm);
 
     //ui->label_play->setStyleSheet("border: 1px solid #000000;");
 
@@ -126,10 +138,7 @@ void offline::od_alg_clicked(const QString od_alg)
 }
 
 
-void offline::on_btn_back_clicked()
-{
-    close();
-}
+
 
 //open file
 void offline::on_btn_open_clicked()

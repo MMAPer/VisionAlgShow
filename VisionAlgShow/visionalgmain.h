@@ -72,8 +72,6 @@ private slots:
     void screen_normal();  //普通模式
     void on_btnMenu_Setting_clicked();  //系统设置
     void on_btnMenu_Logout_clicked();  //注销
-    void on_btnMenu_Min_clicked();  //最小化
-    void on_btnMenu_Close_clicked();  //关闭
     void offlinehandle();  //离线处理
 
     //切换屏幕

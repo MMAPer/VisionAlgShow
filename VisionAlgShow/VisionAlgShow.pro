@@ -59,7 +59,14 @@ FORMS    += visionalgmain.ui \
     offline.ui \
     tracking.ui
 
-win32:RC_FILE=main.rc
+win32:{
+RC_FILE=main.rc
+}
+
+unix:{
+DISTFILES += \
+    main.rc
+}
 
 RESOURCES += \
     rc.qrc
@@ -73,4 +80,6 @@ INCLUDEPATH += /usr/local/opencv3.4.1/include \
                /usr/local/opencv3.4.1/include/opencv \
                /usr/local/opencv3.4.1/include/opencv2
 LIBS += /usr/local/opencv3.4.1/lib/libopencv_*.so
+
+
 

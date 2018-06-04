@@ -45,8 +45,8 @@ public:
     int videoFlag=0;
     QString filePath;
     QString fileSuffix;
-    cv::cuda::GpuMat g_frame;
-    cv::Ptr<cv::cudacodec::VideoReader> g_reader;
+    //cv::cuda::GpuMat g_frame;
+    //cv::Ptr<cv::cudacodec::VideoReader> g_reader;
 
 
 private slots:
@@ -54,7 +54,6 @@ private slots:
     void InitEvent();
     void od_alg_clicked(const QString od_alg);
 
-    void on_btn_back_clicked();
     void on_btn_open_clicked();
     void playbyframe();
 

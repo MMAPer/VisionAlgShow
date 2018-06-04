@@ -57,18 +57,19 @@ void VisionAlgMain::InitStyle()
 {
     this->setStyleSheet("QGroupBox#gboxMain{border-width:0px;}");
     this->setProperty("Form", true);
+    this->setWindowFlags(Qt::Widget);
     //设置窗体标题栏隐藏--Qt::WindowStaysOnTopHint |
-    this->setWindowFlags(Qt::FramelessWindowHint |
-                         Qt::WindowSystemMenuHint |
-                         Qt::WindowMinMaxButtonsHint);
+//    this->setWindowFlags(Qt::FramelessWindowHint |
+//                         Qt::WindowSystemMenuHint |
+//                         Qt::WindowMinMaxButtonsHint);
 
-    IconHelper::Instance()->SetIcon(ui->btnMenu_Close, QChar(0xf00d), 10);
-    IconHelper::Instance()->SetIcon(ui->btnMenu_Min, QChar(0xf068), 10);
-    IconHelper::Instance()->SetIcon(ui->label_ico, QChar(0xf03d), 11);
+    //IconHelper::Instance()->SetIcon(ui->btnMenu_Close, QChar(0xf00d), 10);
+    //IconHelper::Instance()->SetIcon(ui->btnMenu_Min, QChar(0xf068), 10);
+    //IconHelper::Instance()->SetIcon(ui->label_ico, QChar(0xf03d), 11);
 
-    ui->label_title->setText(myApp::AppTitle);
+    //ui->label_title->setText(myApp::AppTitle);
     this->setWindowTitle(myApp::AppTitle);
-    ui->widget_title->setStyleSheet("background-color:#78b4e3;");
+    ui->widget_title->setStyleSheet("background-color:#eeeeee;");
 
 }
 
@@ -156,8 +157,8 @@ void VisionAlgMain::InitSlot()
     connect(ui->btnMenu_Login, SIGNAL(clicked(bool)), this, SLOT(login()));  //登录
     connect(ui->btnMenu_Setting, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Setting_clicked()));  //系统设置
     connect(ui->btnMenu_Logout, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Logout_clicked()));  //注销
-    connect(ui->btnMenu_Min, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Min_clicked()));  //最小化
-    connect(ui->btnMenu_Close, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Close_clicked()));  //关闭
+    //connect(ui->btnMenu_Min, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Min_clicked()));  //最小化
+    //connect(ui->btnMenu_Close, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Close_clicked()));  //关闭
     connect(ui->btn_offlinehandle, SIGNAL(clicked(bool)), this, SLOT(offlinehandle()));  //离线处理
 }
 
@@ -335,17 +336,6 @@ void VisionAlgMain::change_video_16(int index)
 }
 
 
-//关闭
-void VisionAlgMain::on_btnMenu_Close_clicked()
-{
-    exit(0);
-}
-
-//最小化
-void VisionAlgMain::on_btnMenu_Min_clicked()
-{
-    this->showMinimized();
-}
 
 //登录，实际上只是获取了设备和通道信息，获取完成后又注销用户。当双击左侧树结点时，再次登录。应该是考虑资源利用效率的问题
 void VisionAlgMain::login()
