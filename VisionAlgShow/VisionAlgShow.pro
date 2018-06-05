@@ -64,8 +64,7 @@ RC_FILE=main.rc
 }
 
 unix:{
-DISTFILES += \
-    main.rc
+DISTFILES +=
 }
 
 RESOURCES += \

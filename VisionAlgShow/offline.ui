@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1310</width>
-    <height>749</height>
+    <width>1280</width>
+    <height>720</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -16,291 +16,344 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>1280</width>
+    <height>720</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1280</width>
+    <height>720</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <property name="leftMargin">
-    <number>0</number>
+  <widget class="QWidget" name="widget_main" native="true">
+   <property name="geometry">
+    <rect>
+     <x>72</x>
+     <y>70</y>
+     <width>1280</width>
+     <height>580</height>
+    </rect>
    </property>
-   <property name="topMargin">
-    <number>0</number>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
-   <property name="rightMargin">
-    <number>0</number>
+   <property name="minimumSize">
+    <size>
+     <width>1280</width>
+     <height>580</height>
+    </size>
    </property>
-   <property name="bottomMargin">
-    <number>0</number>
+   <property name="maximumSize">
+    <size>
+     <width>1280</width>
+     <height>580</height>
+    </size>
    </property>
-   <property name="spacing">
-    <number>0</number>
+   <property name="styleSheet">
+    <string notr="true">font:9pt &quot;微软雅黑&quot;;</string>
    </property>
-   <item row="0" column="0">
-    <widget class="QWidget" name="widge_title" native="true">
-     <property name="enabled">
-      <bool>true</bool>
+   <widget class="QWidget" name="widget_left" native="true">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>160</width>
+      <height>690</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>160</width>
+      <height>690</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>160</width>
+      <height>690</height>
+     </size>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing">
+      <number>0</number>
      </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+     <property name="leftMargin">
+      <number>20</number>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>100</width>
-       <height>59</height>
-      </size>
+     <property name="topMargin">
+      <number>0</number>
      </property>
-     <property name="styleSheet">
-      <string notr="true">background-color:#78b4e3;</string>
+     <property name="rightMargin">
+      <number>20</number>
      </property>
-     <widget class="QLabel" name="label_dir">
-      <property name="geometry">
-       <rect>
-        <x>60</x>
-        <y>10</y>
-        <width>60</width>
-        <height>30</height>
-       </rect>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+     <property name="bottomMargin">
+      <number>250</number>
+     </property>
+     <item>
+      <widget class="QComboBox" name="cbox_bg">
+       <property name="styleSheet">
+        <string notr="true">background-color:white;color:black;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cbox_od">
+       <property name="styleSheet">
+        <string notr="true">background-color:white;color:black;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cbox_sot">
+       <property name="styleSheet">
+        <string notr="true">background-color:white;color:black;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cbox_sm">
+       <property name="styleSheet">
+        <string notr="true">background-color:white;color:black;</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QLabel" name="label_play">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>0</y>
+      <width>960</width>
+      <height>580</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>960</width>
+      <height>580</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>960</width>
+      <height>580</height>
+     </size>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border:1px solid gray;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QWidget" name="widge_title" native="true">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>-90</x>
+      <y>10</y>
+      <width>1120</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>1120</width>
+      <height>30</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>1120</width>
+      <height>30</height>
+     </size>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_dir">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color:black;</string>
+       </property>
+       <property name="text">
+        <string>当前路径</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="text_dir"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_open">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>打开</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QWidget" name="widget_menu" native="true">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>72</width>
+     <height>720</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>72</width>
+     <height>720</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>72</width>
+     <height>720</height>
+    </size>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QToolButton" name="btn_onlinehandle">
+      <property name="minimumSize">
+       <size>
+        <width>24</width>
+        <height>0</height>
+       </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">color:white;</string>
+       <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
-       <string>当前路径</string>
+       <string/>
       </property>
      </widget>
-     <widget class="QPushButton" name="btn_open">
-      <property name="geometry">
-       <rect>
-        <x>590</x>
-        <y>10</y>
-        <width>80</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
+    </item>
+    <item>
+     <widget class="QToolButton" name="btn_offlinehandle">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
-       <string>打开</string>
+       <string/>
       </property>
      </widget>
-     <widget class="QLineEdit" name="text_dir">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>10</y>
-        <width>441</width>
-        <height>30</height>
-       </rect>
+    </item>
+    <item>
+     <widget class="QToolButton" name="btn_full">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string/>
       </property>
      </widget>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QWidget" name="widget_main" native="true">
-     <property name="styleSheet">
-      <string notr="true">font:9pt &quot;微软雅黑&quot;;</string>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <property name="leftMargin">
-       <number>1</number>
+    </item>
+    <item>
+     <widget class="QToolButton" name="btn_setting">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
-      <property name="topMargin">
-       <number>1</number>
+      <property name="text">
+       <string/>
       </property>
-      <property name="rightMargin">
-       <number>1</number>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="btn_login">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
-      <property name="bottomMargin">
-       <number>1</number>
+      <property name="text">
+       <string/>
       </property>
-      <item>
-       <widget class="QWidget" name="widget_left" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>120</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>120</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <widget class="QWidget" name="deteciton" native="true">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>1</y>
-           <width>635</width>
-           <height>683</height>
-          </rect>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>98</width>
-           <height>0</height>
-          </size>
-         </property>
-         <widget class="QComboBox" name="cbox_od">
-          <property name="geometry">
-           <rect>
-            <x>1</x>
-            <y>120</y>
-            <width>90</width>
-            <height>25</height>
-           </rect>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color:white;color:black;</string>
-          </property>
-         </widget>
-         <widget class="QComboBox" name="cbox_bg">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>40</y>
-            <width>90</width>
-            <height>25</height>
-           </rect>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color:white;color:black;</string>
-          </property>
-         </widget>
-         <widget class="QComboBox" name="cbox_sot">
-          <property name="geometry">
-           <rect>
-            <x>1</x>
-            <y>200</y>
-            <width>90</width>
-            <height>25</height>
-           </rect>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color:white;color:black;</string>
-          </property>
-         </widget>
-         <widget class="QComboBox" name="cbox_sm">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>280</y>
-            <width>90</width>
-            <height>25</height>
-           </rect>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">background-color:white;color:black;</string>
-          </property>
-         </widget>
-        </widget>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="widget_center" native="true">
-        <widget class="QLabel" name="label_play">
-         <property name="geometry">
-          <rect>
-           <x>1</x>
-           <y>1</y>
-           <width>960</width>
-           <height>580</height>
-          </rect>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>960</width>
-           <height>580</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>960</width>
-           <height>580</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">border:1px solid gray;</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_info">
-         <property name="geometry">
-          <rect>
-           <x>56</x>
-           <y>596</y>
-           <width>311</width>
-           <height>61</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </widget>
-      </item>
-      <item>
-       <widget class="QWidget" name="widget_right" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <property name="leftMargin">
-          <number>1</number>
-         </property>
-         <property name="topMargin">
-          <number>1</number>
-         </property>
-         <property name="rightMargin">
-          <number>1</number>
-         </property>
-         <property name="bottomMargin">
-          <number>1</number>
-         </property>
-        </layout>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-  </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="btn_logout">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <zorder>widget_main</zorder>
+  <zorder>horizontalSpacer_2</zorder>
+  <zorder>widget_menu</zorder>
  </widget>
  <resources/>
  <connections/>

@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1310</width>
-    <height>656</height>
+    <width>1290</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>计算机视觉算法展示平台</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
    <property name="spacing">
     <number>0</number>
    </property>
@@ -30,20 +30,14 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QWidget" name="widget_title" native="true">
+    <widget class="QWidget" name="widget_menu" native="true">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>100</width>
-       <height>28</height>
-      </size>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QVBoxLayout" name="verticalLayout_5">
       <property name="spacing">
        <number>0</number>
       </property>
@@ -60,15 +54,15 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QLabel" name="label_HCNetSDK">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QToolButton" name="btn_onlinehandle">
+        <property name="minimumSize">
+         <size>
+          <width>24</width>
+          <height>0</height>
+         </size>
         </property>
         <property name="styleSheet">
-         <string notr="true">font:10pt &quot;微软雅黑&quot;;</string>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string/>
@@ -76,58 +70,53 @@
        </widget>
       </item>
       <item>
-       <widget class="QWidget" name="widget_menu" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+       <widget class="QToolButton" name="btn_offlinehandle">
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QPushButton" name="btnMenu_Full">
-           <property name="text">
-            <string>进入全屏</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnMenu_Setting">
-           <property name="text">
-            <string>系统设置</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnMenu_Login">
-           <property name="text">
-            <string>登录</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnMenu_Logout">
-           <property name="text">
-            <string>注销</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnMenu_Full">
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnMenu_Setting">
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnMenu_Login">
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="btnMenu_Logout">
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
        </widget>
       </item>
      </layout>
@@ -138,24 +127,9 @@
      <property name="styleSheet">
       <string notr="true">font:9pt &quot;微软雅黑&quot;;</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_4">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QWidget" name="widget_left" native="true">
+       <widget class="QWidget" name="widget_camera" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -168,14 +142,7 @@
           <height>16777215</height>
          </size>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QPushButton" name="btn_offlinehandle">
-           <property name="text">
-            <string>离线处理</string>
-           </property>
-          </widget>
-         </item>
+        <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QLabel" name="label">
            <property name="styleSheet">
@@ -194,6 +161,9 @@
           </widget>
          </item>
         </layout>
+        <zorder>label</zorder>
+        <zorder>btnMenu_Login</zorder>
+        <zorder>DVRsets_treeView</zorder>
        </widget>
       </item>
       <item>
@@ -669,6 +639,22 @@
          </size>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_HCNetSDK">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">font:10pt &quot;微软雅黑&quot;;</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QPushButton" name="pushButton">
            <property name="styleSheet">

@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setApplicationName("VisionAlgShow");         //设置应用程序名称
     a.setApplicationVersion("V201805"); //设置应用程序版本
-    a.setWindowIcon(QIcon("image/v.ico"));
+    a.setWindowIcon(QIcon("images/v.ico"));
     myHelper::SetUTF8Code();            //设置程序编码为UTF-8,兼容QT4
     myHelper::SetChinese();             //设置程序为中文字库
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     VisionAlgMain w;
     w.show();
-    w.setGeometry(qApp->desktop()->availableGeometry());
+    //w.setGeometry(qApp->desktop()->availableGeometry());
 
     return a.exec();
 }

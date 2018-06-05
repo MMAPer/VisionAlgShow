@@ -6,6 +6,7 @@
 #include "tracking.h"
 #include <QDesktopWidget>
 #include <opencv2/opencv.hpp>
+#include <QSize>
 extern VisionAlgMain* visionalgmain;
 
 using namespace cv;
@@ -58,6 +59,46 @@ void VisionAlgMain::InitStyle()
     this->setStyleSheet("QGroupBox#gboxMain{border-width:0px;}");
     this->setProperty("Form", true);
     this->setWindowFlags(Qt::Widget);
+    this->resize(QSize(1280,720));
+
+    ui->widget_menu->setStyleSheet("background-color:#3C3C3C;");
+
+    ui->btnMenu_Full->setIcon(QIcon(":images/fullscreen.png"));
+    ui->btnMenu_Full->setIconSize(QSize(32,32));
+    ui->btnMenu_Full->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    ui->btnMenu_Full->setText("\ \ \ \ 全屏\ \ \ \ \ ");
+    ui->btnMenu_Full->resize(QSize(48,48));
+
+
+    ui->btnMenu_Setting->setIcon(QIcon(":images/setting.png"));
+    ui->btnMenu_Setting->setIconSize(QSize(32,32));
+    ui->btnMenu_Setting->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    ui->btnMenu_Setting->setText("\ \ \ \ 设置\ \ \ \ \ ");
+
+    ui->btnMenu_Login->setIcon(QIcon(":images/login.png"));
+    ui->btnMenu_Login->setIconSize(QSize(32,32));
+    ui->btnMenu_Login->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    ui->btnMenu_Login->setText("\ \ \ \ 登录\ \ \ \ \ ");
+
+    ui->btnMenu_Logout->setIcon(QIcon(":images/logout.png"));
+    ui->btnMenu_Logout->setIconSize(QSize(32,32));
+    ui->btnMenu_Logout->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    ui->btnMenu_Logout->setText("\ \ \ \ 注销\ \ \ \ \ ");
+
+    ui->btn_offlinehandle->setIcon(QIcon(":images/offline.png"));
+    ui->btn_offlinehandle->setIconSize(QSize(32,32));
+    ui->btn_offlinehandle->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    ui->btn_offlinehandle->setText("离线处理");
+
+    ui->btn_onlinehandle->setIcon(QIcon(":images/online.png"));
+    ui->btn_onlinehandle->setIconSize(QSize(32,32));
+    ui->btn_onlinehandle->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    ui->btn_onlinehandle->setText("在线处理");
+
+
+
+
+
     //设置窗体标题栏隐藏--Qt::WindowStaysOnTopHint |
 //    this->setWindowFlags(Qt::FramelessWindowHint |
 //                         Qt::WindowSystemMenuHint |
@@ -69,7 +110,7 @@ void VisionAlgMain::InitStyle()
 
     //ui->label_title->setText(myApp::AppTitle);
     this->setWindowTitle(myApp::AppTitle);
-    ui->widget_title->setStyleSheet("background-color:#eeeeee;");
+    //ui->widget_title->setStyleSheet("background-color:#eeeeee;");
 
 }
 
@@ -580,7 +621,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
                 m_gcurrentuserid = i;
                 (*it).setUsrID(i);
                 QStandardItem *item = m_gmodel->itemFromIndex(index);
-                item->setIcon(QIcon(":/image/login.bmp"));
+                item->setIcon(QIcon(":/images/login.bmp"));
             }
         }
         m_gcurrentchannelnum = 0;
@@ -637,7 +678,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
                 m_gcurrentuserid = ret;
                 (*it).setUsrID(ret);
                 QStandardItem *item = m_gmodel->itemFromIndex(index.parent());
-                item->setIcon(QIcon(":/image/login.bmp"));
+                item->setIcon(QIcon(":/images/login.bmp"));
             }
         }
         //目前设备已经登陆成功，开始寻找点击的通道
@@ -923,14 +964,14 @@ int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_D
 
             QModelIndex specialindex = m_qtreemodelindex.child(channelrow,0);
             item = m_gmodel->itemFromIndex(specialindex);
-            item->setIcon(QIcon(":/image/play.bmp"));
+            item->setIcon(QIcon(":/images/play.bmp"));
 
         }
         else if (nodetype == 3)
         {
             QModelIndex  parentindex = m_qtreemodelindex.parent();
             item = m_gmodel->itemFromIndex(parentindex.child(channelrow,0));
-            item->setIcon(QIcon(":/image/play.bmp"));
+            item->setIcon(QIcon(":/images/play.bmp"));
         }
         return 1;
     }
@@ -1073,7 +1114,7 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
         {
 
             QStandardItem *item = m_gmodel->itemFromIndex(deviceindex);
-            item->setIcon(QIcon(":/image/login.bmp"));
+            item->setIcon(QIcon(":/images/login.bmp"));
             ui->DVRsets_treeView->expand(deviceindex);
             ui->DVRsets_treeView->setExpanded(deviceindex, 1);
         }
@@ -1086,7 +1127,7 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
             {
                 //加载上线标记图片和展开通道
                 QStandardItem *item = m_gmodel->itemFromIndex(channelindex);
-                item->setIcon(QIcon(":/image/play.bmp"));
+                item->setIcon(QIcon(":/images/play.bmp"));
                 ui->DVRsets_treeView->expand(channelindex);
                 ui->DVRsets_treeView->setExpanded(channelindex, 1);
             }
@@ -1139,7 +1180,7 @@ void VisionAlgMain::on_btnMenu_Logout_clicked()
 
            //加载登出设备标记图片和收起通道
            QStandardItem *item = m_gmodel->itemFromIndex(m_qtreemodelindex);
-           item->setIcon(QIcon(":/image/logout.bmp"));
+           item->setIcon(QIcon(":/images/logout.bmp"));
            ui->DVRsets_treeView->setExpanded(m_qtreemodelindex, 0);
            QMessageBox::information(this, tr("NET_DVR_Logout_V30"), tr("注销成功"));
            return;
@@ -1153,8 +1194,8 @@ void VisionAlgMain::on_btnMenu_Full_clicked()
     this->setGeometry(qApp->desktop()->geometry());
     this->layout()->setContentsMargins(0, 0, 0, 0);
     ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
-    ui->widget_title->setVisible(false);
-    ui->widget_left->setVisible(false);
+    ui->widget_menu->setVisible(false);
+    ui->widget_camera->setVisible(false);
     ui->widget_right->setVisible(false);
 }
 
@@ -1164,7 +1205,7 @@ void VisionAlgMain::screen_normal()
     this->setGeometry(qApp->desktop()->availableGeometry());
     this->layout()->setContentsMargins(1, 1, 1, 1);
     ui->widget_main->layout()->setContentsMargins(5, 5, 5, 5);
-    ui->widget_title->setVisible(true);
-    ui->widget_left->setVisible(true);
+    ui->widget_menu->setVisible(true);
+    ui->widget_camera->setVisible(true);
     ui->widget_right->setVisible(true);
 }

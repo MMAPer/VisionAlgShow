@@ -8,7 +8,7 @@ int myApp::DeskHeight = 768;
 QString myApp::AppTitle = "监控视频下计算机视觉算法展示平台";
 QString myApp::NVRType = "海康";
 QString myApp::IPCType = "海康";
-QString myApp::AppStyle = ":/image/silvery.qss";
+QString myApp::AppStyle = ":/images/silvery.qss";
 QString myApp::VideoType = "16";
 
 
