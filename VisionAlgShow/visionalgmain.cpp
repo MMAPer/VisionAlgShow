@@ -58,42 +58,47 @@ void VisionAlgMain::InitStyle()
 {
     this->setStyleSheet("QGroupBox#gboxMain{border-width:0px;}");
     this->setProperty("Form", true);
-    this->setWindowFlags(Qt::Widget);
     this->resize(QSize(1280,720));
 
     ui->widget_menu->setStyleSheet("background-color:#3C3C3C;");
+    ui->widget_alg->setStyleSheet("background-color:#3C3C3C;");
 
     ui->btnMenu_Full->setIcon(QIcon(":images/fullscreen.png"));
     ui->btnMenu_Full->setIconSize(QSize(32,32));
     ui->btnMenu_Full->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btnMenu_Full->setText("\ \ \ \ 全屏\ \ \ \ \ ");
-    ui->btnMenu_Full->resize(QSize(48,48));
+    ui->btnMenu_Full->setText("全屏");
+    ui->btnMenu_Full->setFixedSize(64,64);
 
 
     ui->btnMenu_Setting->setIcon(QIcon(":images/setting.png"));
     ui->btnMenu_Setting->setIconSize(QSize(32,32));
     ui->btnMenu_Setting->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btnMenu_Setting->setText("\ \ \ \ 设置\ \ \ \ \ ");
+    ui->btnMenu_Setting->setText("设置");
+    ui->btnMenu_Setting->setFixedSize(64,64);
 
     ui->btnMenu_Login->setIcon(QIcon(":images/login.png"));
     ui->btnMenu_Login->setIconSize(QSize(32,32));
     ui->btnMenu_Login->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btnMenu_Login->setText("\ \ \ \ 登录\ \ \ \ \ ");
+    ui->btnMenu_Login->setText("登录 ");
+    ui->btnMenu_Login->setFixedSize(64,64);
 
     ui->btnMenu_Logout->setIcon(QIcon(":images/logout.png"));
     ui->btnMenu_Logout->setIconSize(QSize(32,32));
     ui->btnMenu_Logout->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btnMenu_Logout->setText("\ \ \ \ 注销\ \ \ \ \ ");
+    ui->btnMenu_Logout->setText("注销");
+    ui->btnMenu_Logout->setFixedSize(64,64);
 
     ui->btn_offlinehandle->setIcon(QIcon(":images/offline.png"));
     ui->btn_offlinehandle->setIconSize(QSize(32,32));
     ui->btn_offlinehandle->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     ui->btn_offlinehandle->setText("离线处理");
+    ui->btn_offlinehandle->setFixedSize(64,64);
 
     ui->btn_onlinehandle->setIcon(QIcon(":images/online.png"));
     ui->btn_onlinehandle->setIconSize(QSize(32,32));
     ui->btn_onlinehandle->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     ui->btn_onlinehandle->setText("在线处理");
+    ui->btn_onlinehandle->setFixedSize(64,64);
 
 
 
@@ -198,9 +203,9 @@ void VisionAlgMain::InitSlot()
     connect(ui->btnMenu_Login, SIGNAL(clicked(bool)), this, SLOT(login()));  //登录
     connect(ui->btnMenu_Setting, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Setting_clicked()));  //系统设置
     connect(ui->btnMenu_Logout, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Logout_clicked()));  //注销
-    //connect(ui->btnMenu_Min, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Min_clicked()));  //最小化
-    //connect(ui->btnMenu_Close, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Close_clicked()));  //关闭
     connect(ui->btn_offlinehandle, SIGNAL(clicked(bool)), this, SLOT(offlinehandle()));  //离线处理
+
+
 }
 
 //通过注册事件监听器绑定事件
@@ -245,14 +250,37 @@ void VisionAlgMain::on_btnMenu_Setting_clicked()
 //离线处理
 void VisionAlgMain::offlinehandle()
 {
-
-    offline o;
-    o.setGeometry(qApp->desktop()->availableGeometry());
-    o.exec();
+    myOffline = new offline(ui->widget_main);
+    ui->widget_camera->hide();
+    ui->widget_alg->hide();
+    ui->gBoxMain->hide();
+    myOffline->show();
+    myOffline->move(0,0);
+    connect(ui->btn_onlinehandle, SIGNAL(clicked(bool)), this, SLOT(onlinehandle()));   //在线处理
+    ui->btnMenu_Full->blockSignals(true); //禁用全屏
+    //connect(ui->btnMenu_Full,&QPushButton::clicked,this,&VisionAlgMain::offline_full);
+    //offline o;
+    //o.setGeometry(qApp->desktop()->availableGeometry());
+    //o.exec();
     //qDebug()<<"离线处理"<<endl;
     //tracking t;
     //t.setGeometry(qApp->desktop()->availableGeometry());
     //t.exec();
+}
+
+void VisionAlgMain::onlinehandle()
+{
+    myOffline->close();
+    ui->widget_alg->show();
+    ui->widget_camera->show();
+    ui->gBoxMain->show();
+
+
+}
+
+void VisionAlgMain::offline_full()
+{
+
 }
 
 void VisionAlgMain::removelayout()
@@ -1196,7 +1224,7 @@ void VisionAlgMain::on_btnMenu_Full_clicked()
     ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
     ui->widget_menu->setVisible(false);
     ui->widget_camera->setVisible(false);
-    ui->widget_right->setVisible(false);
+    ui->widget_alg->setVisible(false);
 }
 
 //正常屏
@@ -1207,5 +1235,5 @@ void VisionAlgMain::screen_normal()
     ui->widget_main->layout()->setContentsMargins(5, 5, 5, 5);
     ui->widget_menu->setVisible(true);
     ui->widget_camera->setVisible(true);
-    ui->widget_right->setVisible(true);
+    ui->widget_alg->setVisible(true);
 }

@@ -18,6 +18,7 @@
 #include "realplay.h"
 #include <QDebug>
 #include <QMessageBox>
+#include <offline.h>
 
 /* 说明:主程序
  * 功能:系统运行主程序
@@ -73,6 +74,8 @@ private slots:
     void on_btnMenu_Setting_clicked();  //系统设置
     void on_btnMenu_Logout_clicked();  //注销
     void offlinehandle();  //离线处理
+    void onlinehandle();
+    void offline_full();
 
     //切换屏幕
     void show_video_1();  //切换到1画面
@@ -114,6 +117,8 @@ private:
     QLabel *tempLab;  //临时播放视频的标签
     QList<QLabel *> VideoLab;  //通道显示视频lab载体
     QList<QLayout *>VideoLay;  //通道视频所在lab的layout
+
+    offline *myOffline;
 
 };
 

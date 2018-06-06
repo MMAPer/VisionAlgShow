@@ -87,39 +87,6 @@ void offline::InitStyle()
 
     //ui->label_play->setStyleSheet("border: 1px solid #000000;");
 
-    ui->widget_menu->setStyleSheet("background-color:#3C3C3C;");
-
-    ui->btn_full->setIcon(QIcon(":images/fullscreen.png"));
-    ui->btn_full->setIconSize(QSize(32,32));
-    ui->btn_full->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btn_full->setText("\ \ \ \ 全屏\ \ \ \ \ ");
-    ui->btn_full->resize(QSize(48,48));
-
-
-    ui->btn_setting->setIcon(QIcon(":images/setting.png"));
-    ui->btn_setting->setIconSize(QSize(32,32));
-    ui->btn_setting->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btn_setting->setText("\ \ \ \ 设置\ \ \ \ \ ");
-
-    ui->btn_login->setIcon(QIcon(":images/login.png"));
-    ui->btn_login->setIconSize(QSize(32,32));
-    ui->btn_login->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btn_login->setText("\ \ \ \ 登录\ \ \ \ \ ");
-
-    ui->btn_logout->setIcon(QIcon(":images/logout.png"));
-    ui->btn_logout->setIconSize(QSize(32,32));
-    ui->btn_logout->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btn_logout->setText("\ \ \ \ 注销\ \ \ \ \ ");
-
-    ui->btn_offlinehandle->setIcon(QIcon(":images/offline.png"));
-    ui->btn_offlinehandle->setIconSize(QSize(32,32));
-    ui->btn_offlinehandle->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btn_offlinehandle->setText("离线处理");
-
-    ui->btn_onlinehandle->setIcon(QIcon(":images/online.png"));
-    ui->btn_onlinehandle->setIconSize(QSize(32,32));
-    ui->btn_onlinehandle->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-    ui->btn_onlinehandle->setText("在线处理");
 
 }
 

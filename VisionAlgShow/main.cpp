@@ -22,9 +22,10 @@ int main(int argc, char *argv[])
     qDebug()<<"AppPath ="<<myApp::AppPath<<" DeskWidth ="<<myApp::DeskWidth<<" DeskHeight ="<<myApp::DeskHeight;
 
     //加载和应用样式
-    //myHelper::SetStyle(myApp::AppStyle);
+    myHelper::SetStyle(myApp::AppStyle);
 
     VisionAlgMain w;
+    w.setWindowFlags(Qt::Window);
     w.show();
     //w.setGeometry(qApp->desktop()->availableGeometry());
 

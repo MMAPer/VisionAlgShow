@@ -1,27 +1,9 @@
 QWidget[objectName="widget_main"]
 {
     background-color:#EAEAEA;
-    color:rgb(0,0,0);
+    color:#EAEAEA;
 }
 
-QLineEdit[objectName="fileLineEdit"]
-{
-    background-color:rgb(225,225,225);
-}
-QTextEdit[objectName="text_dir"]
-{
-    background-color:rgb(225,225,225);
-    color:rgb(0,0,0);
-}
-QLabel#label_od,#label_dir
-{
-    color:rgb(0,0,0);
-}
-
-QPushButton:enabled
-{
-    background:rgb(120, 170, 220);
-}
 
 QTreeView
 {
@@ -64,21 +46,3 @@ QLabel#labVideo1:focus,#labVideo2:focus,#labVideo3:focus,#labVideo4:focus,#labVi
     border: 1px solid red;
 }
 
-QMenu
-{
-    background-color:rgb(225, 225, 225);
-    color:rgb(0,0,0);
-}
-
-QMenu::item
-{
-    background-color:transparent;
-    padding:8px 32px;
-    margin:0px 8px;
-    border-bottom: 1px solid #DBDBDB;
-}
-
-QMenu::item:hover
-{
-    border-bottom: #2dabf9;
-}
