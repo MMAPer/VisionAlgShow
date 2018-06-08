@@ -34,7 +34,7 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
     QStandardItem *pDeviceRootItem = new QStandardItem(QString("device tree"));
     //devicetreenode->appendRow(pDeviceRootItem);
     parentItem->appendRow(pDeviceRootItem);
-    pDeviceRootItem->setIcon(QIcon(":/image/tree.bmp"));
+    pDeviceRootItem->setIcon(QIcon(":/images/tree.bmp"));
 	pDeviceRootItem->setEditable(0);
  
 	QList<TreeItem*> parents1;
@@ -52,7 +52,7 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
 			++it;
 			pDeviceItem = new QStandardItem(*it);
 			pDeviceRootItem->appendRow(pDeviceItem);
-            pDeviceItem->setIcon(QIcon(":/image/logout.bmp"));
+            pDeviceItem->setIcon(QIcon(":/images/logout.bmp"));
 			pDeviceItem->setEditable(0);
         }
  
@@ -62,7 +62,7 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
 			++it;
 			pChannelItem = new QStandardItem(*it);
 			pDeviceItem->appendRow(pChannelItem);
-            pChannelItem->setIcon(QIcon(":/image/camera.bmp"));
+            pChannelItem->setIcon(QIcon(":/images/camera.bmp"));
 			pChannelItem->setEditable(0);
         }
     }

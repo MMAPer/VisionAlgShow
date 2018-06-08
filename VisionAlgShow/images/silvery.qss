@@ -1,3 +1,8 @@
+QWidget#VisionAlgMain
+{
+    background-color:#EAEAEA;
+}
+
 QWidget[objectName="widget_main"]
 {
     background-color:#EAEAEA;
@@ -44,5 +49,24 @@ QLabel#labVideo1:focus,#labVideo2:focus,#labVideo3:focus,#labVideo4:focus,#labVi
 {
     background-color:rgb(234, 235, 237);
     border: 1px solid red;
+}
+
+QMenu
+{
+    background-color:rgb(225, 225, 225);
+    color:rgb(0,0,0);
+}
+
+QMenu::item
+{
+    background-color:transparent;
+    padding:8px 32px;
+    margin:0px 8px;
+    border-bottom: 1px solid #DBDBDB;
+}
+
+QMenu::item:hover
+{
+    border-bottom: #2dabf9;
 }
 

@@ -59,6 +59,7 @@ void VisionAlgMain::InitStyle()
     this->setStyleSheet("QGroupBox#gboxMain{border-width:0px;}");
     this->setProperty("Form", true);
     this->resize(QSize(1280,720));
+    ui->widget_menu->move(0,0);
 
     ui->widget_menu->setStyleSheet("background-color:#3C3C3C;");
     ui->widget_alg->setStyleSheet("background-color:#3C3C3C;");
@@ -250,10 +251,11 @@ void VisionAlgMain::on_btnMenu_Setting_clicked()
 //离线处理
 void VisionAlgMain::offlinehandle()
 {
-    myOffline = new offline(ui->widget_main);
-    ui->widget_camera->hide();
+    myOffline = new offline(ui->widget_show);
+    myOffline->setAttribute(Qt::WA_DeleteOnClose);
     ui->widget_alg->hide();
-    ui->gBoxMain->hide();
+    ui->widget_main->hide();
+    //ui->widget_show->hide();
     myOffline->show();
     myOffline->move(0,0);
     connect(ui->btn_onlinehandle, SIGNAL(clicked(bool)), this, SLOT(onlinehandle()));   //在线处理
@@ -271,9 +273,9 @@ void VisionAlgMain::offlinehandle()
 void VisionAlgMain::onlinehandle()
 {
     myOffline->close();
+   // ui->widget_show->show();
     ui->widget_alg->show();
-    ui->widget_camera->show();
-    ui->gBoxMain->show();
+    ui->widget_main->show();
 
 
 }
@@ -281,6 +283,12 @@ void VisionAlgMain::onlinehandle()
 void VisionAlgMain::offline_full()
 {
 
+    this->setGeometry(qApp->desktop()->geometry());
+    this->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_menu->setVisible(false);
+    ui->widget_camera->setVisible(false);
+    ui->widget_alg->setVisible(false);
 }
 
 void VisionAlgMain::removelayout()
@@ -1231,8 +1239,8 @@ void VisionAlgMain::on_btnMenu_Full_clicked()
 void VisionAlgMain::screen_normal()
 {
     this->setGeometry(qApp->desktop()->availableGeometry());
-    this->layout()->setContentsMargins(1, 1, 1, 1);
-    ui->widget_main->layout()->setContentsMargins(5, 5, 5, 5);
+    this->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
     ui->widget_menu->setVisible(true);
     ui->widget_camera->setVisible(true);
     ui->widget_alg->setVisible(true);

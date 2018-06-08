@@ -75,7 +75,7 @@ void offline::InitStyle()
 
     //目标跟踪
     cbox_sot = ui->cbox_sot;
-    string str_sot[] = {"单目标跟踪"};
+    string str_sot[] = {"目标跟踪"};
     vector<string> alg_sot(str_sot, str_sot+1);
     addCboxItem(cbox_sot, alg_sot);
 
