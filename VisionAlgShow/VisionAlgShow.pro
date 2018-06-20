@@ -37,7 +37,8 @@ SOURCES += main.cpp\
     treeitem.cpp \
     treemodel.cpp \
     offline.cpp \
-    tracking.cpp
+    tracking.cpp \
+    camera.cpp
 
 HEADERS  += visionalgmain.h \
     myapp.h \
@@ -51,7 +52,8 @@ HEADERS  += visionalgmain.h \
     treeitem.h \
     treemodel.h \
     offline.h \
-    tracking.h
+    tracking.h \
+    camera.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \

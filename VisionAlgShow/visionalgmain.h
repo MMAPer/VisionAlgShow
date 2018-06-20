@@ -11,6 +11,7 @@
 #include <QString>
 #include <QStandardItem>
 #include "Public.h"
+#include "camera.h"
 #include "devicedata.h"
 #include "channeldata.h"
 #include "treeitem.h"
@@ -39,23 +40,21 @@ public:
     explicit VisionAlgMain(QWidget *parent = 0);
     ~VisionAlgMain();
 
+    void InitCamera();  //初始化海康SDK
+
     //控制标识符
-    int m_gsdkinit;  //sdk是否初始化标志
-    int m_bislogin = FALSE;  //是否登录
-    int m_iposttreelevel;  //点击的树节点的层级
+    int currentWinIndex;  //当前选择的屏幕索引
+    int m_iposttreelevel;  //点击的树节点的层级：0表示设备树根节点  1表示NVR设备  2表示通道（也称IP设备）
     int m_rpwindownumindex;  //窗口数量选择按钮的索引
     QModelIndex m_qtreemodelindex;  //树点击的索引
 
     //用户及摄像头设备信息
-    int m_gcurrentuserid;  //当前登录的用户ID
-    int m_guseridbackup;  //用户ID备份
+    int currentUserId;  //当前登录的用户ID
     int m_gcurrentchannelnum;  //当前通道
     int m_gchannelnumbackup;  //当前通道备份，用于作比较的
     int m_gcurrentchannellinkmode;  //通道链接模式
-    NET_DVR_DEVICEINFO_V30 m_gcurrentdeviceinfo;  //当前设备信息
 
     TreeModel *m_gmodel;  //自定义数据类型，包括设备及通道数据的封装
-    QList<DeviceData> m_qlistdevicedata;  //DeviceData链表
 
     void showDeviceTree(const QString &nodedata);  //根据字符串显示左侧树结构
     QString getStringFromList(QList<DeviceData> &data);
@@ -93,11 +92,11 @@ protected:
 
 private:
     Ui::VisionAlgMain *ui;
+    Camera *camera;
 
     void InitData();  //初始化用户及摄像头设备数据
     void InitStyle();  //初始化样式
     void InitVideo(); //初始化视频布局载体数据
-    void InitSdk();  //初始化海康SDK
     void InitSlot();  //初始化事件绑定
     void removelayout();  //移除所有布局
     void change_video_1(int index=0);  //改变1画面布局

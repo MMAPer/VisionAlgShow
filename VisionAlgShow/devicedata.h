@@ -13,6 +13,7 @@ class DeviceData
 {
 public:
     friend class VisionAlgMain;
+    friend class Camera;
     friend class RealPlay;
     DeviceData();
     ~DeviceData();

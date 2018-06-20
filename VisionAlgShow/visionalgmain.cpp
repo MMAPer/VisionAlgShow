@@ -2,6 +2,7 @@
 #include "ui_visionalgmain.h"
 #include "iconhelper.h"
 #include "myapp.h"
+#include "camera.h"
 #include "offline.h"
 #include "tracking.h"
 #include <QDesktopWidget>
@@ -23,11 +24,10 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
     ui(new Ui::VisionAlgMain)
 {
     ui->setupUi(this);
-
+    this->InitCamera();  //初始化SDK
     this->InitData();
     this->InitStyle();  //初始化样式
     this->InitSlot();  //连接信号与槽
-    this->InitSdk();  //初始化SDK
     this->InitVideo();  //初始化视频布局载体数据
 }
 
@@ -38,22 +38,43 @@ VisionAlgMain::~VisionAlgMain()
         stopRealPlay();
     }
     delete ui;
-    m_bislogin = FALSE;
-    NET_DVR_Cleanup();
+}
+
+//初始化摄像头对象及海康SDK
+void VisionAlgMain::InitCamera()
+{
+    camera = new Camera();
+    if(camera->initSDK())
+    {
+        QString strHCNetSDK;
+        strHCNetSDK.sprintf("HCNetSDK V%d.%d.%d.%d", camera->getMainVersion(),camera->getSubVersion(),
+                            camera->getBuildVersion(), camera->getBuildNUmber());
+//        dwVersion = PlayM4_GetSdkVersion();
+//        QString strPlaySDKVersion;
+//        strPlaySDKVersion.sprintf("PlayCtrl V%d.%d.%d.%d", (0xff000000 & dwVersion)>>24, (0x00ff0000 & dwVersion)>>16,\
+//                            (0x0000ff00 & dwVersion)>>8, (0x000000ff & dwVersion));
+        ui->label_HCNetSDK->setText("海康威视SDK版本："+strHCNetSDK);
+    }
+    else
+    {
+            QMessageBox::information(this, tr("SDK初始化失败，"), \
+                                     tr("SDK_LAST_ERROR=%1").arg(NET_DVR_GetLastError()));
+    }
 }
 
 //初始化用户及摄像头设备数据
 void VisionAlgMain::InitData()
 {
-    m_gcurrentuserid = -1;  //当前登录用户
-    m_guseridbackup = m_gcurrentuserid;
+    currentWinIndex = 0;  //默认当前选择第一块屏
+    currentUserId = -1;  //当前登录用户
+    m_guseridbackup = currentUserId;
     m_gcurrentchannelnum = 1;  //当前选择通道
     m_gchannelnumbackup = 1;
     m_gcurrentchannellinkmode = 0x0;  //当前通道链接模式
     m_gmodel = NULL;  //当前的自定义TreeModel数据  重写了QStandardItemModel
 }
 
-//init the global style of the application
+//初始化应用的全局样式
 void VisionAlgMain::InitStyle()
 {
     this->setStyleSheet("QGroupBox#gboxMain{border-width:0px;}");
@@ -120,31 +141,8 @@ void VisionAlgMain::InitStyle()
 
 }
 
-//init the SDK of Hikvision
-void VisionAlgMain::InitSdk()
-{
-    if(!NET_DVR_Init())
-    {
-        QMessageBox::information(this, tr("SDK初始化失败，"), \
-                                 tr("SDK_LAST_ERROR=%1").arg(NET_DVR_GetLastError()));
-    }
-    //初始化成功，Title上显示SDK版本
-    else
-    {
-        DWORD dwVersion = NET_DVR_GetSDKBuildVersion();
-        QString strHCNetSDK;
-        strHCNetSDK.sprintf("HCNetSDK V%d.%d.%d.%d", (0xff000000 & dwVersion)>>24, (0x00ff0000 & dwVersion)>>16,\
-            (0x0000ff00 & dwVersion)>>8, (0x000000ff & dwVersion));
 
-        dwVersion = PlayM4_GetSdkVersion();
-        QString strPlaySDKVersion;
-        strPlaySDKVersion.sprintf("PlayCtrl V%d.%d.%d.%d", (0xff000000 & dwVersion)>>24, (0x00ff0000 & dwVersion)>>16,\
-                            (0x0000ff00 & dwVersion)>>8, (0x000000ff & dwVersion));
-        ui->label_HCNetSDK->setText("SDK版本："+strHCNetSDK+"  "+strPlaySDKVersion);
-    }
-}
-
-//init the play lab
+//初始化播放窗口
 void VisionAlgMain::InitVideo()
 {
     tempLab = 0;
@@ -196,7 +194,7 @@ void VisionAlgMain::InitSlot()
     //左侧树监听事件
     ui->DVRsets_treeView->setMouseTracking(1);
     connect(ui->DVRsets_treeView, SIGNAL(pressed(const QModelIndex &)),
-            this, SLOT(pressedTreeView(const QModelIndex &)));  //单击
+            this, SLOT(pressedTreeView(const QModelIndex &)));  //单击左侧摄像头树结构
     connect(ui->DVRsets_treeView, SIGNAL(doubleClicked(const QModelIndex &)),
             this, SLOT(OnDoubleClickTree(const QModelIndex &)));  //双击
     //按钮点击事件
@@ -205,7 +203,6 @@ void VisionAlgMain::InitSlot()
     connect(ui->btnMenu_Setting, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Setting_clicked()));  //系统设置
     connect(ui->btnMenu_Logout, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Logout_clicked()));  //注销
     connect(ui->btn_offlinehandle, SIGNAL(clicked(bool)), this, SLOT(offlinehandle()));  //离线处理
-
 
 }
 
@@ -276,8 +273,6 @@ void VisionAlgMain::onlinehandle()
    // ui->widget_show->show();
     ui->widget_alg->show();
     ui->widget_main->show();
-
-
 }
 
 void VisionAlgMain::offline_full()
@@ -414,145 +409,31 @@ void VisionAlgMain::change_video_16(int index)
 
 
 
-//登录，实际上只是获取了设备和通道信息，获取完成后又注销用户。当双击左侧树结点时，再次登录。应该是考虑资源利用效率的问题
+//登录
 void VisionAlgMain::login()
 {
     //防止重复登录
-    if(m_bislogin==TRUE)
+    if(camera->getIsLogin()==true)
     {
         QMessageBox::information(this, tr("login information"), tr("您已经登录"));
         return;
     }
-    DeviceData *newDNode = new DeviceData;  //设备信息
-    QString treedatastring;  //设备信息写成字符串，供左侧树解析
-    newDNode->m_qdevicename = myApp::DeviceNodeName;  //设备名称
-    newDNode->m_qip = myApp::DeviceIp;  //设备IP
-    newDNode->m_qiport = myApp::DevicePort;  //设备端口
-    newDNode->m_qusername = myApp::DeviceUserName;  //用户名
-    newDNode->m_qpassword = myApp::DevicePwd;  //密码
-
-    //先要尝试登陆设备，登陆成功后才能加入到队列中，然后还要判断通道情况
-    newDNode->m_iuserid = NET_DVR_Login_V30(newDNode->getIP().toLatin1().data(),
-                                            newDNode->getPort(),
-                                            newDNode->getUsrName().toLatin1().data(),
-                                            newDNode->getPasswd().toLatin1().data(),
-                                            &newDNode->m_deviceinfo);
-    //目前起始通道号是1  设备支持的最大通道数是64
-    qDebug()<<"起始通道号="<<newDNode->m_deviceinfo.byStartDChan<<
-              ";设备支持最大IP通道数="<<newDNode->m_deviceinfo.byIPChanNum+256*newDNode->m_deviceinfo.byHighDChanNum<<endl;
-    //登录失败
-    if (newDNode->m_iuserid < 0)
+    //登录
+    if(!camera->login())
     {
         QMessageBox::information(this, tr("login fail"), tr("请检查网络是否在同一网段,error code=%1").arg(NET_DVR_GetLastError()));
-        newDNode = NULL;
         return;
     }
-    else  //登录成功
+    //通过SDK获取设备信息
+    if(!camera->setDeviceData())
     {
-        qDebug()<<"设备登陆成功，用户ID为"<<newDNode->m_iuserid;
-        //登录设备成功后，获取通道信息
-        //目前中心设备为NVR，只有IP通道，通道号为：byStartDChan到byStartDChan+(byIpChanNum+byHighDChanNum*256)-1
-        NET_DVR_IPPARACFG ipcfg;
-        DWORD Bytesreturned;
-        //通过远程参数配置接口NET_DVR_GetDVRConfig获取设备详细的IP资源信息，获取成功返回1，否则返回0
-        int status = NET_DVR_GetDVRConfig(newDNode->m_iuserid, NET_DVR_GET_IPPARACFG,0,&ipcfg,sizeof(NET_DVR_IPPARACFG),&Bytesreturned);
-        qDebug()<<"获取设备详细的IP资源信息status="<<status<<endl;
-
-        if(!status)
-        {
-            qDebug()<<"8000 devices begin"<<endl;
-            //8000 devices begin
-            NET_DVR_DEVICECFG devicecfg;
-            DWORD Bytesreturned;
-            //获取设备参数
-            if(!NET_DVR_GetDVRConfig(newDNode->m_iuserid, NET_DVR_GET_DEVICECFG,0,&devicecfg,sizeof(NET_DVR_DEVICECFG),&Bytesreturned))
-            {
-                QMessageBox::information(this, tr("NET_DVR_GetDVRConfig"),tr("SDK_LAST_ERROR=%1").arg(NET_DVR_GetLastError()));
-                delete newDNode;
-                newDNode = NULL;
-                return;
-            }
-            for (int i=devicecfg.byStartChan;i<=devicecfg.byChanNum ;i++)  //byStartChan起始通道号
-            {
-                ChannelData *newChannel = new ChannelData;
-                QString name="Cameral";
-                QString num = QString::number(i, 10) ;  //以十进制的数字形式转为字符串
-                name.append(num);
-                //填充通道初始属性内容,初始设为TCP+主码流
-                newChannel->setChannelName(name);
-                newChannel->setChannelNum(i);
-                newChannel->setProtocolType(TCP);
-                newChannel->setStreamType(MAINSTREAM);
-                //添加进设备节点
-                newDNode->m_qlistchanneldata.append(*newChannel);
-                delete newChannel;
-                newChannel =NULL;
-            }
-            NET_DVR_Logout_V30(newDNode->m_iuserid);
-            newDNode->m_iuserid = -1;
-            m_qlistdevicedata.append(*newDNode);
-            delete newDNode;
-            newDNode =NULL;
-            treedatastring =getStringFromList(m_qlistdevicedata);
-            qDebug()<<"treedatastring = "<<treedatastring;
-            showDeviceTree(treedatastring);
-            return;
-            //8000 devices end
-        }
-
-        //9000 IPC接入模拟通道
-        for (int i=0;i< MAX_ANALOG_CHANNUM;i++)
-        {
-            if (1== ipcfg.byAnalogChanEnable[i])
-            {
-                ChannelData *newChannel = new ChannelData;
-                QString name="Cameral";
-                QString num = QString::number(i+1, 10) ;
-                name.append(num);
-                //填充通道初始属性内容,初始设为TCP+主码流
-                newChannel->setChannelName(name);
-                newChannel->setChannelNum(i+1);
-                newChannel->setProtocolType(TCP);
-                newChannel->setStreamType(MAINSTREAM);
-
-                //添加进设备节点
-                newDNode->m_qlistchanneldata.append(*newChannel);
-            }
-        }
-
-        //9000 IPC接入IP通道  这是我们要用到的信息，上面的都是针对其他设备的
-        for (int i=0;i< MAX_IP_CHANNEL;i++)
-        {
-//QMessageBox::information(this,tr("ipcfg"), tr("ipcfg.struIPChanInfo[%1].byIPID=%2").arg(i).arg(ipcfg.struIPChanInfo[i].byIPID));
-
-            if (0 != ipcfg.struIPChanInfo[i].byIPID)  //IP设备ID低8位，当设备ID为0时表示通道不可用
-            {
-                ChannelData *newChannel = new ChannelData;
-                QString name="IPCameral";
-                QString num = QString::number(ipcfg.struIPChanInfo[i].byIPID, 10) ;
-                name.append(num);
-                //填充通道初始属性内容,初始设为TCP+主码流
-                newChannel->setChannelName(name);
-                newChannel->setChannelNum(ipcfg.struIPChanInfo[i].byIPID);
-                newChannel->setProtocolType(TCP);
-                newChannel->setStreamType(MAINSTREAM);
-                //添加进设备节点
-                newDNode->m_qlistchanneldata.append(*newChannel);
-                delete newChannel;
-                newChannel =NULL;
-            }
-        }
-        NET_DVR_Logout_V30(newDNode->m_iuserid);
-        newDNode->m_iuserid = -1;
-        m_qlistdevicedata.append(*newDNode);
-        delete newDNode;
-        treedatastring = getStringFromList(m_qlistdevicedata);
-        qDebug()<<"treedatastring = "<<treedatastring;
-        showDeviceTree(treedatastring);
-        qDebug()<<"login completed!"<<endl;
-        m_bislogin = TRUE;
+        QMessageBox::information(this, tr("device data fail"), tr("无法获取设备信息，请检查网络,error code=%1").arg(NET_DVR_GetLastError()));
         return;
     }
+    //设备信息写成字符串，供左侧树解析
+    QString treedatastring;
+    treedatastring = getStringFromList(camera->listDeviceData);
+    showDeviceTree(treedatastring);
 }
 
 //单击树结点，对一些状态索引进行改变
@@ -560,9 +441,9 @@ void VisionAlgMain::pressedTreeView(const QModelIndex &index)
 {
     //目的是设置当前有效地设备和通道信息，方案是先区分是设备树，设备还是通道
     //然后通过index的parent()和row()值来定位在qlistdevice中的位置和实际内容
-//    QMessageBox::information(this, tr("pressedTreeView"),tr("row=%1 colum=%2 data=%3").arg(
-//                                 index.row()).arg(index.column()).arg(
-//                                 index.data().toString().toLatin1().data()));
+    QMessageBox::information(this, tr("pressedTreeView"),tr("row=%1 colum=%2 data=%3").arg(
+                                 index.row()).arg(index.column()).arg(
+                                 index.data().toString().toLatin1().data()));
     int level = 0;
     QModelIndex tempindex = index;
     while(tempindex.parent().isValid()==1)
@@ -622,19 +503,17 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
         int devicerow = index.row();  //获取设备在左侧树的索引,本项目中只有一台DVR，所以devicerouw=0
         int i=0;
         QList<DeviceData>::iterator it;
-        for ( it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end();++it)
+        for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end();++it)
         {
             if (i == devicerow)  //点击第一台的时候就是初始为0的情况，无需做多余操作
             {
-                break;//以设别名称作为关键字，区别不同设备。
+                break;//以设备名称作为关键字，区别不同设备。
             }
             i++;
         }
 
-        m_gcurrentuserid =(*it).getUsrID();  //获取用户ID
-
         //如果被点击的设备还没有登录
-        if (m_gcurrentuserid < 0)
+        if (camera->userId < 0)
         {
             int i = -1;
             //登录
@@ -654,23 +533,21 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
             }
             else  //登陆成功
             {
-                m_gcurrentuserid = i;
+                camera->userId = i;
                 (*it).setUsrID(i);
                 QStandardItem *item = m_gmodel->itemFromIndex(index);
                 item->setIcon(QIcon(":/images/login.bmp"));
             }
         }
         m_gcurrentchannelnum = 0;
-        memcpy(&m_gcurrentdeviceinfo, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
+        memcpy(&camera->myDeviceInfo.struDeviceV30, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
         //播放视频
-        if(m_rpstartstopflag==1 && m_guseridbackup!=m_gcurrentuserid)
+        if(m_rpstartstopflag==1 && m_guseridbackup!=currentUserId)
         {
             realplay();
         }
         realplay();
-        //Change the user id of parameters configuring.
-        m_guseridbackup = m_gcurrentuserid;
-        m_gchannelnumbackup =0;
+        m_gchannelnumbackup = 0;
         ui->DVRsets_treeView->setExpanded(index,0);
         return;
     }
@@ -678,7 +555,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
     //当前点击的是一个通道
     else if (m_iposttreelevel == 2)
     {
-        int deviceindex = index.parent().row();  //点击通道所属设备在树中的索引
+        int deviceindex = index.parent().row();  //点击通道所属设备在树中的索引，目前只有一台设备，所以为0
         int channelindex = index.row();  //点击通道的索引
 
         //need first find device then channel then set the channel num
@@ -686,7 +563,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
         QList<ChannelData>::iterator it_channel;
 
         int i=0;
-        for ( it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end(); ++it)
+        for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
         {
             if (i ==deviceindex)
             {
@@ -694,9 +571,8 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
             }
             i++;
         }
-        m_gcurrentuserid =(*it).getUsrID();
         //如果设备没有登录先登录
-        if (m_gcurrentuserid < 0)
+        if (camera->userId < 0)
         {
             int ret=-1;
             ret=NET_DVR_Login_V30((*it).getIP().toLatin1().data(), (*it).getPort(),
@@ -711,14 +587,14 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
             }
             else  //登录成功
             {
-                m_gcurrentuserid = ret;
+                camera->userId = ret;
                 (*it).setUsrID(ret);
                 QStandardItem *item = m_gmodel->itemFromIndex(index.parent());
                 item->setIcon(QIcon(":/images/login.bmp"));
             }
         }
         //目前设备已经登陆成功，开始寻找点击的通道
-        memcpy(&m_gcurrentdeviceinfo, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
+        memcpy(&camera->myDeviceInfo.struDeviceV30, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
         i=0;
         for (it_channel = (*it).m_qlistchanneldata.begin(); it_channel !=
                     (*it).m_qlistchanneldata.end();++it_channel)
@@ -726,7 +602,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
             if (i == channelindex)
             {
                 //找到了通道 与上次点击的设备进行比较，处理会不相同
-                if (m_guseridbackup != m_gcurrentuserid)
+                if (m_guseridbackup != currentUserId)
                 {
 //                    如果在播放状态先关闭之前的预览
                     if (m_rpstartstopflag == 1)
@@ -749,7 +625,6 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
 
             m_gchannelnumbackup = (*it_channel).getChannelNum();
             m_gcurrentchannelnum = (*it_channel).getChannelNum();
-            m_guseridbackup = m_gcurrentuserid;
             break;
         }
         //没找到则i++
@@ -763,7 +638,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
 void VisionAlgMain::realplay()
 {
     //User must login.
-    if ( m_gcurrentuserid < 0)
+    if ( currentUserId < 0)
     {
         QMessageBox::information(this,tr("have no login yet"),tr("not login"));
         return;
@@ -913,7 +788,7 @@ int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_D
     QList<ChannelData>::iterator it_channel;
     //在设备列表中寻找设备节点
     int i = 0;
-    for ( it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end(); ++it)
+    for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
     {
         if (i == devicerow)
         {
@@ -1020,7 +895,7 @@ void VisionAlgMain::stopRealPlayEncapseInterface()
     QList<ChannelData>::iterator it_channel;
     //在设备列表中寻找设备节点
     int i = 0;
-    for ( it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end(); ++it)
+    for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
     {
         if (m_rpuseridbackup == (*it).getUsrID())
         {
@@ -1143,8 +1018,8 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
     QList<DeviceData>::iterator it;  //设备迭代器
     QList<ChannelData>::iterator it_channel;  //通道迭代器
     int i=0;
-    it = m_qlistdevicedata.begin();
-    while((deviceindex.isValid()==1)&&(it != m_qlistdevicedata.end()))
+    it = camera->listDeviceData.begin();
+    while((deviceindex.isValid()==1)&&(it != camera->listDeviceData.end()))
     {
         if (it->getUsrID()!=-1)
         {
@@ -1181,7 +1056,7 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
 //注销
 void VisionAlgMain::on_btnMenu_Logout_clicked()
 {
-    if(m_gcurrentuserid<0)
+    if(currentUserId<0)
     {
         QMessageBox::information(this, tr("logout information"),tr("未存在已登录的设备，双击设备"
                                                                    "或通道进行登录及播放"));
@@ -1191,7 +1066,7 @@ void VisionAlgMain::on_btnMenu_Logout_clicked()
        int deviceindex = m_qtreemodelindex.row();
        int i = 0;
        QList<DeviceData>::iterator it;
-       for (it = m_qlistdevicedata.begin(); it != m_qlistdevicedata.end(); ++it)
+       for (it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
        {
            if(i==deviceindex)
            {
@@ -1212,7 +1087,8 @@ void VisionAlgMain::on_btnMenu_Logout_clicked()
            }
            int ret = NET_DVR_Logout_V30((*it).m_iuserid);
            (*it).setUsrID(-1);
-           m_gcurrentuserid = -1;
+           currentUserId = -1;
+           camera->userId = -1;
 
            //加载登出设备标记图片和收起通道
            QStandardItem *item = m_gmodel->itemFromIndex(m_qtreemodelindex);
