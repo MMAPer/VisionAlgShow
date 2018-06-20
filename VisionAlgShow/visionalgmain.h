@@ -50,6 +50,7 @@ public:
 
     //用户及摄像头设备信息
     int currentUserId;  //当前登录的用户ID
+    int m_guseridbackup;
     int m_gcurrentchannelnum;  //当前通道
     int m_gchannelnumbackup;  //当前通道备份，用于作比较的
     int m_gcurrentchannellinkmode;  //通道链接模式
