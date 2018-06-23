@@ -83,6 +83,21 @@ private:
     QComboBox *cbox_sot;  //单目标跟踪下拉按钮
     QComboBox *cbox_sm;  //衣物解析下拉按钮
 
+    void removeLayout();
+    void change_video_1(int index=0);  //改变1画面布局
+    void change_video_4(int index=0);  //改变4画面布局
+    void change_video_9(int index=0);  //改变9画面布局
+    void change_video_16(int index=0);  //改变16画面布局
+
+    void InitOfflineVideo();
+    bool video_max;
+    int windowNum;  //窗口数
+//    QLabel *tempLabel;  //临时播放视频的标签
+//    QList<QLabel *> offlineVideoLabel;  //通道显示视频lab载体
+    QList<QLayout *> offlineVideoLayout;  //通道视频所在lab的layout
+    QMenu *offlineMenu;
+
+
 
 };
 

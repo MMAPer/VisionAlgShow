@@ -110,6 +110,34 @@ void offline::InitEvent()
     //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_yolo()));
 }
 
+//init the offline play lab
+//void offline::InitOfflineVideo()
+//{
+//    tempLabel = 0;
+//    video_max = false;
+
+//    offlineVideoLabel.append(ui->labVideo1);
+//    offlineVideoLabel.append(ui->labVideo2);
+//    offlineVideoLabel.append(ui->labVideo3);
+//    offlineVideoLabel.append(ui->labVideo4);
+
+//    offlineVideoLayout.append(ui->lay1);
+//    offlineVideoLayout.append(ui->lay2);
+
+//    for (int i = 0; i < 4; i++) {
+//        VideoLab[i]->installEventFilter(this);
+//        VideoLab[i]->setProperty("labVideo", true);
+//        VideoLab[i]->setText(QString("屏幕%1").arg(i + 1));
+//    }
+
+//    offlineMenu = new QMenu(this);
+//    offlineMenu->setStyleSheet("font: 10pt \"微软雅黑\";");
+//    offlineMenu->addAction("切换到1画面", this, SLOT(show_video_1()));
+//    offlineMenu->addAction("切换到4画面", this, SLOT(show_video_4()));
+//    tempLabel = offlineVideoLabel[0];
+//    show_video_4();
+//}
+
 
 
 void offline::od_alg_clicked(const QString od_alg)
@@ -163,10 +191,10 @@ void offline::on_btn_open_clicked()
             //static const int kInpWidth = 960;
             //static const int kInpHeight = 576;
             cv::Mat image = cv::imread(filePath.toStdString());
-           // cv::resize(image, image, Size(kInpWidth, kInpHeight));
+            cv::resize(image, image, Size(480, 290));
             QImage img = offline::Mat2QImage(image);
-            ui->label_play->setPixmap(QPixmap::fromImage(img));
-            ui->label_play->setAlignment(Qt::AlignCenter);
+            ui->labVideo1->setPixmap(QPixmap::fromImage(img));
+            ui->labVideo1->setAlignment(Qt::AlignCenter);
             //ui->label_play->setAlignment(Qt::AlignVCenter);
 
         }
@@ -185,8 +213,8 @@ void offline::on_btn_open_clicked()
                 if (!frame.empty())
                 {
                     image = Mat2QImage(frame);
-                    ui->label_play->setPixmap(QPixmap::fromImage(image));
-                    ui->label_play->setAlignment(Qt::AlignCenter);
+                    ui->labVideo1->setPixmap(QPixmap::fromImage(image));
+                    ui->labVideo1->setAlignment(Qt::AlignCenter);
                     timer = new QTimer(this);
                     timer->setInterval(1000/rate);   //set timer match with FPS
                     connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
@@ -205,7 +233,7 @@ void offline::playbyframe()
         if (!frame.empty())
         {
             image = Mat2QImage(frame);
-            ui->label_play->setPixmap(QPixmap::fromImage(image));
+            ui->labVideo1->setPixmap(QPixmap::fromImage(image));
             //this->update();
         }
 }
@@ -260,8 +288,8 @@ void offline::bgSubtraction()
             Ptr<BackgroundSubtractor> bg_model = createBackgroundSubtractorMOG2();
             bg_model->apply(frame, fgmask);
             image=offline::Mat2QImage(fgmask);
-            ui->label_play->setPixmap(QPixmap::fromImage(image));
-            ui->label_play->setAlignment(Qt::AlignCenter);
+            ui->labVideo1->setPixmap(QPixmap::fromImage(image));
+            ui->labVideo1->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
         }
     }
@@ -289,9 +317,11 @@ void offline::od_alg_hog()
         cv::rectangle(image, regions[i], cv::Scalar(0, 0, 255), 2);
     }
     //cv::imshow("行人检测", image);
+    cv::resize(image, image, Size(480, 290));
     QImage img=offline::Mat2QImage(image);
-    ui->label_play->setPixmap(QPixmap::fromImage(img));
-    ui->label_play->setAlignment(Qt::AlignCenter);
+
+    ui->labVideo1->setPixmap(QPixmap::fromImage(img));
+    ui->labVideo1->setAlignment(Qt::AlignCenter);
 
     }
 
@@ -331,10 +361,11 @@ void offline::od_alg_dpm()
     //String text =format("%0.1f fps",1.0/t);
     //Scalar textColor(0,0,250);
     //putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
-
+    cv::resize(frame, frame, Size(480, 290));
     QImage img=offline::Mat2QImage(frame);
-    ui->label_play->setPixmap(QPixmap::fromImage(img));
-    ui->label_play->setAlignment(Qt::AlignCenter);
+
+    ui->labVideo2->setPixmap(QPixmap::fromImage(img));
+    ui->labVideo2->setAlignment(Qt::AlignCenter);
 }
 
 void offline::od_alg_faster_rcnn()
@@ -402,9 +433,11 @@ void offline::od_alg_faster_rcnn()
                 putText(img, label, Point(left, top), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0));
             }
         }
+        cv::resize(img, img, Size(480, 290));
         image=offline::Mat2QImage(img);
-        ui->label_play->setPixmap(QPixmap::fromImage(image));
-        ui->label_play->setAlignment(Qt::AlignCenter);
+
+        ui->labVideo1->setPixmap(QPixmap::fromImage(image));
+        ui->labVideo1->setAlignment(Qt::AlignCenter);
 
     }
 }
@@ -510,9 +543,10 @@ void offline::od_alg_ssd()
             //if (waitKey(1) >= 0) break;
             //cv::resize(ssdFrame, ssdFrame, Size(kInpWidth, kInpHeight));
             QImage ssdQImage;
+            cv::resize(ssdFrame, ssdFrame, Size(480, 290));
             ssdQImage=offline::Mat2QImage(ssdFrame);
-            ui->label_play->setPixmap(QPixmap::fromImage(ssdQImage));
-            ui->label_play->setAlignment(Qt::AlignCenter);
+            ui->labVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
+            ui->labVideo3->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
             }
         }
@@ -592,9 +626,10 @@ void offline::od_alg_ssd()
                     }
                 }
                 QImage ssdQImage;
+                cv::resize(ssdImage, ssdImage, Size(480, 290));
                 ssdQImage=offline::Mat2QImage(ssdImage);
-                ui->label_play->setPixmap(QPixmap::fromImage(ssdQImage));
-                ui->label_play->setAlignment(Qt::AlignCenter);
+                ui->labVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
+                ui->labVideo3->setAlignment(Qt::AlignCenter);
 
 //              ui->label_info->setText("time_resize="+QString::number(time_resize,'f',6)+'\n'+
 //                                    "time_input="+QString::number(time_intput,'f',6)+'\n'+
@@ -719,10 +754,11 @@ void offline::od_alg_yolo()
 
             //imshow("YOLO: Detections", frame);
             //if (waitKey(1) >= 0) break;
+            cv::resize(yoloFrame, yoloFrame, Size(480, 290));
 
             QImage yoloQImage=offline::Mat2QImage(yoloFrame);
-            ui->label_play->setPixmap(QPixmap::fromImage(yoloQImage));
-            ui->label_play->setAlignment(Qt::AlignCenter);
+            ui->labVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
+            ui->labVideo4->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
 
 
@@ -797,10 +833,11 @@ void offline::od_alg_yolo()
                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
            }
        }
+       cv::resize(yoloImage, yoloImage, Size(480, 290));
 
        QImage yoloQImage=offline::Mat2QImage(yoloImage);
-       ui->label_play->setPixmap(QPixmap::fromImage(yoloQImage));
-       ui->label_play->setAlignment(Qt::AlignCenter);
+       ui->labVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
+       ui->labVideo4->setAlignment(Qt::AlignCenter);
     }
 
 
