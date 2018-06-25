@@ -15,6 +15,7 @@
 #include "treemodel.h"
 #include "realplay.h"
 #include "opencv2/opencv.hpp"
+#include <QLabel>
 
 
 namespace Ui {
@@ -48,6 +49,9 @@ public:
     //cv::cuda::GpuMat g_frame;
     //cv::Ptr<cv::cudacodec::VideoReader> g_reader;
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event);
+
 
 private slots:
     void InitStyle();
@@ -65,6 +69,9 @@ private slots:
     void od_alg_yolo();
 
     void bgSubtraction();
+
+    void show_video_1();   //切换到1画面
+    void show_video_4();   //切换到4画面
 
 private:
     Ui::offline *ui;
@@ -86,16 +93,15 @@ private:
     void removeLayout();
     void change_video_1(int index=0);  //改变1画面布局
     void change_video_4(int index=0);  //改变4画面布局
-    void change_video_9(int index=0);  //改变9画面布局
-    void change_video_16(int index=0);  //改变16画面布局
 
-    void InitOfflineVideo();
+    void InitOfflineVideo();  //初始化视频布局载体数据
     bool video_max;
-    int windowNum;  //窗口数
-//    QLabel *tempLabel;  //临时播放视频的标签
-//    QList<QLabel *> offlineVideoLabel;  //通道显示视频lab载体
+    int offlineWindowNum;  //窗口数
+    QLabel *offlineTempLabel;  //临时播放视频的标签
+    QList<QLabel *> offlineVideoLabel;  //通道显示视频lab载体
     QList<QLayout *> offlineVideoLayout;  //通道视频所在lab的layout
-    QMenu *offlineMenu;
+    QMenu *offlineMenu; //鼠标右键菜单
+
 
 
 

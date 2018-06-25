@@ -39,6 +39,7 @@ offline::offline(QWidget *parent) :
     ui->setupUi(this);
     this->InitStyle();  //初始化样式
     this->InitEvent();  //事件信号与槽绑定
+    this->InitOfflineVideo();
 
 }
 
@@ -111,34 +112,101 @@ void offline::InitEvent()
 }
 
 //init the offline play lab
-//void offline::InitOfflineVideo()
-//{
-//    tempLabel = 0;
-//    video_max = false;
+void offline::InitOfflineVideo()
+{
+    offlineTempLabel = 0;
+    video_max = false;
 
-//    offlineVideoLabel.append(ui->labVideo1);
-//    offlineVideoLabel.append(ui->labVideo2);
-//    offlineVideoLabel.append(ui->labVideo3);
-//    offlineVideoLabel.append(ui->labVideo4);
+    offlineVideoLabel.append(ui->labelVideo1);
+    offlineVideoLabel.append(ui->labelVideo2);
+    offlineVideoLabel.append(ui->labelVideo3);
+    offlineVideoLabel.append(ui->labelVideo4);
 
-//    offlineVideoLayout.append(ui->lay1);
-//    offlineVideoLayout.append(ui->lay2);
+    offlineVideoLayout.append(ui->layoutVideo1);
+    offlineVideoLayout.append(ui->layoutVideo2);
 
-//    for (int i = 0; i < 4; i++) {
-//        VideoLab[i]->installEventFilter(this);
-//        VideoLab[i]->setProperty("labVideo", true);
-//        VideoLab[i]->setText(QString("屏幕%1").arg(i + 1));
-//    }
+    for (int i = 0; i < 4; i++) {
+        offlineVideoLabel[i]->installEventFilter(this);
+        offlineVideoLabel[i]->setProperty("labVideo", true);
+        offlineVideoLabel[i]->setText(QString("屏幕%1").arg(i + 1));
+    }
 
-//    offlineMenu = new QMenu(this);
-//    offlineMenu->setStyleSheet("font: 10pt \"微软雅黑\";");
-//    offlineMenu->addAction("切换到1画面", this, SLOT(show_video_1()));
-//    offlineMenu->addAction("切换到4画面", this, SLOT(show_video_4()));
-//    tempLabel = offlineVideoLabel[0];
-//    show_video_4();
-//}
+    offlineMenu = new QMenu(this);
+    offlineMenu->setStyleSheet("font: 10pt \"微软雅黑\";");
+    offlineMenu->addAction("切换到1画面", this, SLOT(show_video_1()));
+    offlineMenu->addAction("切换到4画面", this, SLOT(show_video_4()));
+    offlineTempLabel = offlineVideoLabel[0];
+    show_video_4();
+}
 
+void offline::removeLayout()
+{
+    for(int i=0; i<2; i++)
+    {
+        offlineVideoLayout[0]->removeWidget(offlineVideoLabel[i]);
+        offlineVideoLabel[i]->setVisible(false);
+    }
 
+    for(int i=2; i<4; i++)
+    {
+        offlineVideoLayout[0]->removeWidget(offlineVideoLabel[i]);
+        offlineVideoLabel[i]->setVisible(false);
+    }
+}
+void offline::show_video_1()
+{
+    removeLayout();
+    myApp::VideoType="1";
+    video_max= true;
+    change_video_1();
+    offlineWindowNum=1;
+}
+
+void offline::change_video_1(int index)
+{
+    for (int i = (index + 0); i < (index + 1) ; i++)
+    {
+        offlineVideoLayout[0]->addWidget(offlineVideoLabel[i]);
+        offlineVideoLabel[i]->setVisible(true);
+    }
+}
+
+void offline::show_video_4()
+{
+    removeLayout();
+    myApp::VideoType="4";
+    change_video_4();
+    offlineWindowNum=4;
+}
+
+void offline::change_video_4(int index)
+{
+    for (int i = (index + 0); i < (index + 2); i++) {
+        offlineVideoLayout[0]->addWidget(offlineVideoLabel[i]);
+        offlineVideoLabel[i]->setVisible(true);
+    }
+
+    for (int i = (index + 2); i < (index + 4); i++) {
+        offlineVideoLayout[1]->addWidget(offlineVideoLabel[i]);
+        offlineVideoLabel[i]->setVisible(true);
+    }
+}
+
+//通过注册事件监听器绑定事件
+bool offline::eventFilter(QObject *obj, QEvent *event)
+{
+    QMouseEvent *MouseEvent = static_cast<QMouseEvent *>(event);
+    if((event->type()) == QEvent::MouseButtonPress)
+    {
+       if(MouseEvent->buttons() == Qt::RightButton)
+        {
+            offlineTempLabel = qobject_cast<QLabel *>(obj);
+            offlineMenu->exec(QCursor::pos());
+            return true;
+        }
+    }
+    return QObject::eventFilter(obj, event);
+}
 
 void offline::od_alg_clicked(const QString od_alg)
 {
@@ -166,9 +234,6 @@ void offline::od_alg_clicked(const QString od_alg)
     }
 }
 
-
-
-
 //open file
 void offline::on_btn_open_clicked()
 {
@@ -193,8 +258,8 @@ void offline::on_btn_open_clicked()
             cv::Mat image = cv::imread(filePath.toStdString());
             cv::resize(image, image, Size(480, 290));
             QImage img = offline::Mat2QImage(image);
-            ui->labVideo1->setPixmap(QPixmap::fromImage(img));
-            ui->labVideo1->setAlignment(Qt::AlignCenter);
+            ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
+            ui->labelVideo1->setAlignment(Qt::AlignCenter);
             //ui->label_play->setAlignment(Qt::AlignVCenter);
 
         }
@@ -213,8 +278,8 @@ void offline::on_btn_open_clicked()
                 if (!frame.empty())
                 {
                     image = Mat2QImage(frame);
-                    ui->labVideo1->setPixmap(QPixmap::fromImage(image));
-                    ui->labVideo1->setAlignment(Qt::AlignCenter);
+                    ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
+                    ui->labelVideo1->setAlignment(Qt::AlignCenter);
                     timer = new QTimer(this);
                     timer->setInterval(1000/rate);   //set timer match with FPS
                     connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
@@ -233,7 +298,7 @@ void offline::playbyframe()
         if (!frame.empty())
         {
             image = Mat2QImage(frame);
-            ui->labVideo1->setPixmap(QPixmap::fromImage(image));
+            ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
             //this->update();
         }
 }
@@ -288,8 +353,8 @@ void offline::bgSubtraction()
             Ptr<BackgroundSubtractor> bg_model = createBackgroundSubtractorMOG2();
             bg_model->apply(frame, fgmask);
             image=offline::Mat2QImage(fgmask);
-            ui->labVideo1->setPixmap(QPixmap::fromImage(image));
-            ui->labVideo1->setAlignment(Qt::AlignCenter);
+            ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
+            ui->labelVideo1->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
         }
     }
@@ -320,8 +385,8 @@ void offline::od_alg_hog()
     cv::resize(image, image, Size(480, 290));
     QImage img=offline::Mat2QImage(image);
 
-    ui->labVideo1->setPixmap(QPixmap::fromImage(img));
-    ui->labVideo1->setAlignment(Qt::AlignCenter);
+    ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
+    ui->labelVideo1->setAlignment(Qt::AlignCenter);
 
     }
 
@@ -364,8 +429,8 @@ void offline::od_alg_dpm()
     cv::resize(frame, frame, Size(480, 290));
     QImage img=offline::Mat2QImage(frame);
 
-    ui->labVideo2->setPixmap(QPixmap::fromImage(img));
-    ui->labVideo2->setAlignment(Qt::AlignCenter);
+    ui->labelVideo2->setPixmap(QPixmap::fromImage(img));
+    ui->labelVideo2->setAlignment(Qt::AlignCenter);
 }
 
 void offline::od_alg_faster_rcnn()
@@ -436,8 +501,8 @@ void offline::od_alg_faster_rcnn()
         cv::resize(img, img, Size(480, 290));
         image=offline::Mat2QImage(img);
 
-        ui->labVideo1->setPixmap(QPixmap::fromImage(image));
-        ui->labVideo1->setAlignment(Qt::AlignCenter);
+        ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
+        ui->labelVideo1->setAlignment(Qt::AlignCenter);
 
     }
 }
@@ -545,8 +610,8 @@ void offline::od_alg_ssd()
             QImage ssdQImage;
             cv::resize(ssdFrame, ssdFrame, Size(480, 290));
             ssdQImage=offline::Mat2QImage(ssdFrame);
-            ui->labVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
-            ui->labVideo3->setAlignment(Qt::AlignCenter);
+            ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
+            ui->labelVideo3->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
             }
         }
@@ -628,8 +693,8 @@ void offline::od_alg_ssd()
                 QImage ssdQImage;
                 cv::resize(ssdImage, ssdImage, Size(480, 290));
                 ssdQImage=offline::Mat2QImage(ssdImage);
-                ui->labVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
-                ui->labVideo3->setAlignment(Qt::AlignCenter);
+                ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
+                ui->labelVideo3->setAlignment(Qt::AlignCenter);
 
 //              ui->label_info->setText("time_resize="+QString::number(time_resize,'f',6)+'\n'+
 //                                    "time_input="+QString::number(time_intput,'f',6)+'\n'+
@@ -757,8 +822,8 @@ void offline::od_alg_yolo()
             cv::resize(yoloFrame, yoloFrame, Size(480, 290));
 
             QImage yoloQImage=offline::Mat2QImage(yoloFrame);
-            ui->labVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
-            ui->labVideo4->setAlignment(Qt::AlignCenter);
+            ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
+            ui->labelVideo4->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
 
 
@@ -836,8 +901,8 @@ void offline::od_alg_yolo()
        cv::resize(yoloImage, yoloImage, Size(480, 290));
 
        QImage yoloQImage=offline::Mat2QImage(yoloImage);
-       ui->labVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
-       ui->labVideo4->setAlignment(Qt::AlignCenter);
+       ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
+       ui->labelVideo4->setAlignment(Qt::AlignCenter);
     }
 
 
