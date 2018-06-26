@@ -183,6 +183,7 @@ void offline::change_video_4(int index)
 {
     for (int i = (index + 0); i < (index + 2); i++) {
         offlineVideoLayout[0]->addWidget(offlineVideoLabel[i]);
+        //offlineVideoLabel[i]->resize(QSize(480,290));
         offlineVideoLabel[i]->setVisible(true);
     }
 
@@ -237,56 +238,65 @@ void offline::od_alg_clicked(const QString od_alg)
 //open file
 void offline::on_btn_open_clicked()
 {
-    if (capture.isOpened())
+    if (screenCount >= 4)
+        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前通道已满！"));
+    else
     {
-        capture.release();     //decide if capture is already opened; if so,close it
-        //filePath = "";
-    }
-        filePath =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
-
-        ui->text_dir->setText(filePath);
-
-
-        QFileInfo fileInfo=QFileInfo(filePath);
-        fileSuffix=fileInfo.suffix();
-        //ui->text_dir->setText(fileSuffix);
-        if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" )
+        if (capture.isOpened())
         {
-            videoFlag = 0;
-            //static const int kInpWidth = 960;
-            //static const int kInpHeight = 576;
-            cv::Mat image = cv::imread(filePath.toStdString());
-            cv::resize(image, image, Size(480, 290));
-            QImage img = offline::Mat2QImage(image);
-            ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
-            ui->labelVideo1->setAlignment(Qt::AlignCenter);
-            //ui->label_play->setAlignment(Qt::AlignVCenter);
-
+            capture.release();     //decide if capture is already opened; if so,close it
+            //filePath = "";
         }
-        else
-        {
-            videoFlag = 1;
-            capture.open(filePath.toStdString());
-            //GPU
-            //g_reader = cv::cudacodec::createVideoReader(filePath.toStdString());
-            //g_reader->nextFrame(g_frame);
-            //rate = 30;
-            if (capture.isOpened())
+            filePath =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
+
+            ui->text_dir->setText(filePath);
+
+
+            QFileInfo fileInfo=QFileInfo(filePath);
+            fileSuffix=fileInfo.suffix();
+            //ui->text_dir->setText(fileSuffix);
+            if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" )
             {
-                rate= capture.get(CV_CAP_PROP_FPS);
-                capture >> frame;
-                if (!frame.empty())
+                videoFlag = 0;
+                //static const int kInpWidth = 960;
+                //static const int kInpHeight = 576;
+                cv::Mat image = cv::imread(filePath.toStdString());
+                //cv::resize(image, image, Size(480, 290));
+                QImage img = offline::Mat2QImage(image);
+                selectScreen(img,screenCount);
+                screenCount++;
+                //ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
+                //ui->labelVideo1->setAlignment(Qt::AlignCenter);
+                //ui->label_play->setAlignment(Qt::AlignVCenter);
+
+            }
+            else
+            {
+                videoFlag = 1;
+                capture.open(filePath.toStdString());
+                //GPU
+                //g_reader = cv::cudacodec::createVideoReader(filePath.toStdString());
+                //g_reader->nextFrame(g_frame);
+                //rate = 30;
+                if (capture.isOpened())
                 {
-                    image = Mat2QImage(frame);
-                    ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
-                    ui->labelVideo1->setAlignment(Qt::AlignCenter);
-                    timer = new QTimer(this);
-                    timer->setInterval(1000/rate);   //set timer match with FPS
-                    connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
-                    timer->start();
+                    rate= capture.get(CV_CAP_PROP_FPS);
+                    capture >> frame;
+                    if (!frame.empty())
+                    {
+                        image = Mat2QImage(frame);
+                        selectScreen(image,screenCount);
+                        //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
+                        //ui->labelVideo1->setAlignment(Qt::AlignCenter);
+                        timer = new QTimer(this);
+                        timer->setInterval(1000/rate);   //set timer match with FPS
+                        connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
+                        timer->start();
+                    }
+                    screenCount++;
                 }
             }
-        }
+    }
 
 
 }
@@ -298,7 +308,8 @@ void offline::playbyframe()
         if (!frame.empty())
         {
             image = Mat2QImage(frame);
-            ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
+            selectScreen(image,screenCount);
+            //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
             //this->update();
         }
 }
@@ -335,6 +346,23 @@ QImage offline::Mat2QImage(cv::Mat cvImg)
 
 }
 
+void offline::selectScreen(QImage im,int sc)
+{
+    //判断单屏还是多屏
+    if(myApp::VideoType == "4")
+    {
+        //offlineVideoLabel[sc]->resize(QSize(480,290));
+        offlineVideoLabel[sc]->setPixmap(QPixmap::fromImage(im.scaled(480,290)));
+            //screenCount++;
+
+    }
+    else
+    {
+        offlineVideoLabel[0]->setPixmap(QPixmap::fromImage(im));
+        offlineVideoLabel[0]->setAlignment(Qt::AlignCenter);
+    }
+
+}
 void offline::bgSubtraction()
 {
     if (videoFlag==1)
@@ -353,8 +381,9 @@ void offline::bgSubtraction()
             Ptr<BackgroundSubtractor> bg_model = createBackgroundSubtractorMOG2();
             bg_model->apply(frame, fgmask);
             image=offline::Mat2QImage(fgmask);
-            ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
-            ui->labelVideo1->setAlignment(Qt::AlignCenter);
+            selectScreen(image,screenCount);
+            //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
+            //ui->labelVideo1->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
         }
     }
@@ -382,11 +411,11 @@ void offline::od_alg_hog()
         cv::rectangle(image, regions[i], cv::Scalar(0, 0, 255), 2);
     }
     //cv::imshow("行人检测", image);
-    cv::resize(image, image, Size(480, 290));
+    //cv::resize(image, image, Size(480, 290));
     QImage img=offline::Mat2QImage(image);
-
-    ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
-    ui->labelVideo1->setAlignment(Qt::AlignCenter);
+    selectScreen(img,screenCount);
+    //ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
+    //ui->labelVideo1->setAlignment(Qt::AlignCenter);
 
     }
 
@@ -426,11 +455,11 @@ void offline::od_alg_dpm()
     //String text =format("%0.1f fps",1.0/t);
     //Scalar textColor(0,0,250);
     //putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
-    cv::resize(frame, frame, Size(480, 290));
+    //cv::resize(frame, frame, Size(480, 290));
     QImage img=offline::Mat2QImage(frame);
-
-    ui->labelVideo2->setPixmap(QPixmap::fromImage(img));
-    ui->labelVideo2->setAlignment(Qt::AlignCenter);
+    selectScreen(img,screenCount);
+    //ui->labelVideo2->setPixmap(QPixmap::fromImage(img));
+    //ui->labelVideo2->setAlignment(Qt::AlignCenter);
 }
 
 void offline::od_alg_faster_rcnn()
@@ -498,11 +527,11 @@ void offline::od_alg_faster_rcnn()
                 putText(img, label, Point(left, top), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0));
             }
         }
-        cv::resize(img, img, Size(480, 290));
+        //cv::resize(img, img, Size(480, 290));
         image=offline::Mat2QImage(img);
-
-        ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
-        ui->labelVideo1->setAlignment(Qt::AlignCenter);
+        selectScreen(image,screenCount);
+        //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
+        //ui->labelVideo1->setAlignment(Qt::AlignCenter);
 
     }
 }
@@ -608,10 +637,11 @@ void offline::od_alg_ssd()
             //if (waitKey(1) >= 0) break;
             //cv::resize(ssdFrame, ssdFrame, Size(kInpWidth, kInpHeight));
             QImage ssdQImage;
-            cv::resize(ssdFrame, ssdFrame, Size(480, 290));
+            //cv::resize(ssdFrame, ssdFrame, Size(480, 290));
             ssdQImage=offline::Mat2QImage(ssdFrame);
-            ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
-            ui->labelVideo3->setAlignment(Qt::AlignCenter);
+            selectScreen(ssdQImage,screenCount);
+            //ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
+            //ui->labelVideo3->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
             }
         }
@@ -691,10 +721,11 @@ void offline::od_alg_ssd()
                     }
                 }
                 QImage ssdQImage;
-                cv::resize(ssdImage, ssdImage, Size(480, 290));
+                //cv::resize(ssdImage, ssdImage, Size(480, 290));
                 ssdQImage=offline::Mat2QImage(ssdImage);
-                ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
-                ui->labelVideo3->setAlignment(Qt::AlignCenter);
+                selectScreen(ssdQImage,screenCount);
+                //ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
+                //ui->labelVideo3->setAlignment(Qt::AlignCenter);
 
 //              ui->label_info->setText("time_resize="+QString::number(time_resize,'f',6)+'\n'+
 //                                    "time_input="+QString::number(time_intput,'f',6)+'\n'+
@@ -819,11 +850,12 @@ void offline::od_alg_yolo()
 
             //imshow("YOLO: Detections", frame);
             //if (waitKey(1) >= 0) break;
-            cv::resize(yoloFrame, yoloFrame, Size(480, 290));
+            //cv::resize(yoloFrame, yoloFrame, Size(480, 290));
 
             QImage yoloQImage=offline::Mat2QImage(yoloFrame);
-            ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
-            ui->labelVideo4->setAlignment(Qt::AlignCenter);
+            selectScreen(yoloQImage,screenCount);
+            //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
+            //ui->labelVideo4->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
 
 
@@ -898,11 +930,12 @@ void offline::od_alg_yolo()
                        FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
            }
        }
-       cv::resize(yoloImage, yoloImage, Size(480, 290));
+       //cv::resize(yoloImage, yoloImage, Size(480, 290));
 
        QImage yoloQImage=offline::Mat2QImage(yoloImage);
-       ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
-       ui->labelVideo4->setAlignment(Qt::AlignCenter);
+       selectScreen(yoloQImage,screenCount);
+       //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
+       //ui->labelVideo4->setAlignment(Qt::AlignCenter);
     }
 
 

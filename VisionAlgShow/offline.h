@@ -102,6 +102,9 @@ private:
     QList<QLayout *> offlineVideoLayout;  //通道视频所在lab的layout
     QMenu *offlineMenu; //鼠标右键菜单
 
+    void selectScreen(QImage im,int sc);
+    int screenCount=0;
+
 
 
 
