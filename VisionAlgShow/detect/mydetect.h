@@ -12,8 +12,11 @@
 #include <opencv2/video/background_segm.hpp>
 #include <vector>
 
-using namespace std;
 using namespace cv;
+using namespace dnn;
+using namespace std;
+using namespace cv::dnn;
+using namespace cv::dpm;
 
 struct Position
 {
@@ -41,8 +44,8 @@ public:
 class YOLODetector : public MyDetector
 {
 public:
-    int detect(Mat &inputImg, vector<Position> &result) override;
     int loadNet();
+    int detect(Mat &inputImg, vector<Position> &result) override;
 private:
     String modelConfiguration = "../../models/detection/yolo/yolov2.cfg";  //网络结构配置文件
     String modelBinary = "../../models/detection/yolo/yolov2.weights";  //网络权重参数文件

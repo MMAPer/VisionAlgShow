@@ -16,7 +16,7 @@
 #include "realplay.h"
 #include "opencv2/opencv.hpp"
 #include <QLabel>
-#include "detect/mydetect.h"
+
 
 
 namespace Ui {

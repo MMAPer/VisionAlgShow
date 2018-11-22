@@ -746,12 +746,12 @@ void offline::od_alg_ssd()
 
 void offline::od_alg_yolo()
 {
-    YOLODetector *yoloDetector = new YOLODetector();
-    if(yoloDetector->loadNet()==-1)
-    {
-        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
-        return;
-    }
+//    YOLODetector *yoloDetector = new YOLODetector();
+//    if(yoloDetector->loadNet()==-1)
+//    {
+//        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
+//        return;
+//    }
 
     String modelConfiguration = "../../models/detection/yolo/yolov2.cfg";
     String modelBinary = "../../models/detection/yolo/yolov2.weights";

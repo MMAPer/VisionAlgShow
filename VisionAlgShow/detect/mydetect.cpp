@@ -26,6 +26,7 @@ int YOLODetector::detect(Mat &inputImg, vector<Position> &result)
         while (std::getline(classNamesFile, className))
             classNamesVec.push_back(className);
     }
+    Mat yoloImage;
 
        if (inputImg.channels() == 4)
        cvtColor(yoloImage, yoloImage, COLOR_BGRA2BGR);
@@ -90,8 +91,8 @@ int YOLODetector::detect(Mat &inputImg, vector<Position> &result)
        }
        //cv::resize(yoloImage, yoloImage, Size(480, 290));
 
-       QImage yoloQImage=offline::Mat2QImage(yoloImage);
-       selectScreen(yoloQImage,screenCount);
+//       QImage yoloQImage=offline::Mat2QImage(yoloImage);
+//       selectScreen(yoloQImage,screenCount);
        //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
        //ui->labelVideo4->setAlignment(Qt::AlignCenter);
 
