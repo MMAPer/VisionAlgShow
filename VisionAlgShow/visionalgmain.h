@@ -11,15 +11,16 @@
 #include <QString>
 #include <QStandardItem>
 #include "Public.h"
-#include "camera.h"
-#include "devicedata.h"
-#include "channeldata.h"
-#include "treeitem.h"
-#include "treemodel.h"
+#include "camera/camera.h"
+#include "camera/devicedata.h"
+#include "camera/channeldata.h"
+#include "camera/treeitem.h"
+#include "camera/treemodel.h"
 #include "realplay.h"
 #include <QDebug>
 #include <QMessageBox>
 #include <offline.h>
+#include <set>
 
 /* 说明:主程序
  * 功能:系统运行主程序
@@ -27,6 +28,8 @@
  * 时间:2018-03-10  检查:2018-3-10
  */
 
+
+using namespace std;
 
 namespace Ui {
 class VisionAlgMain;
@@ -49,8 +52,6 @@ public:
     QModelIndex m_qtreemodelindex;  //树点击的索引
 
     //用户及摄像头设备信息
-    int currentUserId;  //当前登录的用户ID
-    int m_guseridbackup;
     int m_gcurrentchannelnum;  //当前通道
     int m_gchannelnumbackup;  //当前通道备份，用于作比较的
     int m_gcurrentchannellinkmode;  //通道链接模式
@@ -69,10 +70,10 @@ public:
 //槽函数
 private slots:
     void login();  //登录
-    void on_btnMenu_Full_clicked();  //进入全屏模式
+    void fullScreen();  //进入全屏模式
     void screen_normal();  //普通模式
-    void on_btnMenu_Setting_clicked();  //系统设置
-    void on_btnMenu_Logout_clicked();  //注销
+    void systemSetting();  //系统设置
+    void logoff();  //注销
     void offlinehandle();  //离线处理
     void onlinehandle();
     void offline_full();
@@ -117,6 +118,8 @@ private:
     QLabel *tempLab;  //临时播放视频的标签
     QList<QLabel *> VideoLab;  //通道显示视频lab载体
     QList<QLayout *>VideoLay;  //通道视频所在lab的layout
+
+    set<int> realplayingChanNUm;
 
     offline *myOffline;
 

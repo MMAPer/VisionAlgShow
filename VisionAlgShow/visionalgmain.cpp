@@ -1,8 +1,8 @@
 #include "visionalgmain.h"
 #include "ui_visionalgmain.h"
-#include "iconhelper.h"
-#include "myapp.h"
-#include "camera.h"
+#include "utils/iconhelper.h"
+#include "utils/myapp.h"
+#include "camera/camera.h"
 #include "offline.h"
 #include "tracking.h"
 #include <QDesktopWidget>
@@ -43,9 +43,10 @@ VisionAlgMain::~VisionAlgMain()
 //初始化摄像头对象及海康SDK
 void VisionAlgMain::InitCamera()
 {
-    camera = new Camera();
+    camera = Camera::getCamera();
     if(camera->initSDK())
     {
+        qDebug() << "SDK init successful";
         QString strHCNetSDK;
         strHCNetSDK.sprintf("HCNetSDK V%d.%d.%d.%d", camera->getMainVersion(),camera->getSubVersion(),
                             camera->getBuildVersion(), camera->getBuildNUmber());
@@ -65,11 +66,9 @@ void VisionAlgMain::InitCamera()
 //初始化用户及摄像头设备数据
 void VisionAlgMain::InitData()
 {
-    currentWinIndex = 0;  //默认当前选择第一块屏
-    currentUserId = -1;  //当前登录用户
-    m_guseridbackup = currentUserId;
-    m_gcurrentchannelnum = 1;  //当前选择通道
-    m_gchannelnumbackup = 1;
+    currentWinIndex = 0;  //默认当前选择第一块屏,自定义窗口数组，从0开始计数
+    m_gcurrentchannelnum = 1;  //当前选择通道,通道数是从1开始计数，由海康SDK决定的
+    m_gchannelnumbackup = 1;  //用于备份上个点击的通道
     m_gcurrentchannellinkmode = 0x0;  //当前通道链接模式
     m_gmodel = NULL;  //当前的自定义TreeModel数据  重写了QStandardItemModel
 }
@@ -123,9 +122,6 @@ void VisionAlgMain::InitStyle()
     ui->btn_onlinehandle->setFixedSize(64,64);
 
 
-
-
-
     //设置窗体标题栏隐藏--Qt::WindowStaysOnTopHint |
 //    this->setWindowFlags(Qt::FramelessWindowHint |
 //                         Qt::WindowSystemMenuHint |
@@ -148,7 +144,7 @@ void VisionAlgMain::InitVideo()
     tempLab = 0;
     video_max = false;
 
-    VideoLab.append(ui->labVideo1);
+    VideoLab.append(ui->labVideo1);  //QList<QLabel *> VideoLab;
     VideoLab.append(ui->labVideo2);
     VideoLab.append(ui->labVideo3);
     VideoLab.append(ui->labVideo4);
@@ -165,7 +161,7 @@ void VisionAlgMain::InitVideo()
     VideoLab.append(ui->labVideo15);
     VideoLab.append(ui->labVideo16);
 
-    VideoLay.append(ui->lay1);
+    VideoLay.append(ui->lay1);  //QList<QLayout *>VideoLay;
     VideoLay.append(ui->lay2);
     VideoLay.append(ui->lay3);
     VideoLay.append(ui->lay4);
@@ -183,7 +179,7 @@ void VisionAlgMain::InitVideo()
     menu->addAction("切换到9画面", this, SLOT(show_video_9()));
     menu->addAction("切换到16画面", this, SLOT(show_video_16()));
     tempLab = VideoLab[0];
-    show_video_9();
+    show_video_4();
 }
 
 
@@ -198,10 +194,10 @@ void VisionAlgMain::InitSlot()
     connect(ui->DVRsets_treeView, SIGNAL(doubleClicked(const QModelIndex &)),
             this, SLOT(OnDoubleClickTree(const QModelIndex &)));  //双击
     //按钮点击事件
-    connect(ui->btnMenu_Full, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Full_clicked()));  //进入全屏
+    connect(ui->btnMenu_Full, SIGNAL(clicked(bool)), this, SLOT(fullScreen()));  //进入全屏
     connect(ui->btnMenu_Login, SIGNAL(clicked(bool)), this, SLOT(login()));  //登录
-    connect(ui->btnMenu_Setting, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Setting_clicked()));  //系统设置
-    connect(ui->btnMenu_Logout, SIGNAL(clicked(bool)), this, SLOT(on_btnMenu_Logout_clicked()));  //注销
+    connect(ui->btnMenu_Setting, SIGNAL(clicked(bool)), this, SLOT(systemSetting()));  //系统设置
+    connect(ui->btnMenu_Logout, SIGNAL(clicked(bool)), this, SLOT(logoff()));  //注销
     connect(ui->btn_offlinehandle, SIGNAL(clicked(bool)), this, SLOT(offlinehandle()));  //离线处理
 
 }
@@ -228,7 +224,7 @@ void VisionAlgMain::keyPressEvent(QKeyEvent *event)
     //F1键进入全屏,esc键退出全屏
     switch(event->key()) {
     case Qt::Key_F1:
-        on_btnMenu_Full_clicked();
+        fullScreen();
         break;
     case Qt::Key_Escape:
         screen_normal();
@@ -239,211 +235,15 @@ void VisionAlgMain::keyPressEvent(QKeyEvent *event)
     }
 }
 
-//系统设置
-void VisionAlgMain::on_btnMenu_Setting_clicked()
-{
-    qDebug()<<"系统设置"<<endl;
-}
-
-//离线处理
-void VisionAlgMain::offlinehandle()
-{
-    myOffline = new offline(ui->widget_show);
-    myOffline->setAttribute(Qt::WA_DeleteOnClose);
-    ui->widget_alg->hide();
-    ui->widget_main->hide();
-    //ui->widget_show->hide();
-    myOffline->show();
-    myOffline->move(0,0);
-    connect(ui->btn_onlinehandle, SIGNAL(clicked(bool)), this, SLOT(onlinehandle()));   //在线处理
-    ui->btnMenu_Full->blockSignals(true); //禁用全屏
-    //connect(ui->btnMenu_Full,&QPushButton::clicked,this,&VisionAlgMain::offline_full);
-    //offline o;
-    //o.setGeometry(qApp->desktop()->availableGeometry());
-    //o.exec();
-    //qDebug()<<"离线处理"<<endl;
-    //tracking t;
-    //t.setGeometry(qApp->desktop()->availableGeometry());
-    //t.exec();
-}
-
-void VisionAlgMain::onlinehandle()
-{
-    myOffline->close();
-   // ui->widget_show->show();
-    ui->widget_alg->show();
-    ui->widget_main->show();
-}
-
-void VisionAlgMain::offline_full()
-{
-
-    this->setGeometry(qApp->desktop()->geometry());
-    this->layout()->setContentsMargins(0, 0, 0, 0);
-    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
-    ui->widget_menu->setVisible(false);
-    ui->widget_camera->setVisible(false);
-    ui->widget_alg->setVisible(false);
-}
-
-void VisionAlgMain::removelayout()
-{
-    for (int i = 0; i < 4; i++) {
-        VideoLay[0]->removeWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(false);
-    }
-
-    for (int i = 4; i < 8; i++) {
-        VideoLay[1]->removeWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(false);
-    }
-
-    for (int i = 8; i < 12; i++) {
-        VideoLay[2]->removeWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(false);
-    }
-
-    for (int i = 12; i < 16; i++) {
-        VideoLay[3]->removeWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(false);
-    }
-}
-
-void VisionAlgMain::show_video_1()
-{
-    removelayout();
-    myApp::VideoType = "1";
-    video_max = true;
-    change_video_1();
-    windowNum = 1;
-}
-
-void VisionAlgMain::change_video_1(int index)
-{
-    for (int i = (index + 0); i < (index + 1) ; i++) {
-        VideoLay[0]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-}
-
-void VisionAlgMain::show_video_4()
-{
-    removelayout();
-    video_max = false;
-    myApp::VideoType = "4";
-    windowNum = 4;
-    change_video_4();
-}
-
-void VisionAlgMain::change_video_4(int index)
-{
-    for (int i = (index + 0); i < (index + 2); i++) {
-        VideoLay[0]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-
-    for (int i = (index + 2); i < (index + 4); i++) {
-        VideoLay[1]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-}
-
-void VisionAlgMain::show_video_9()
-{
-    removelayout();
-    video_max = false;
-    myApp::VideoType = "9";
-    windowNum = 9;
-    change_video_9(0);
-}
-
-void VisionAlgMain::change_video_9(int index)
-{
-    for (int i = (index + 0); i < (index + 3); i++) {
-        VideoLay[0]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-
-    for (int i = (index + 3); i < (index + 6); i++) {
-        VideoLay[1]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-
-    for (int i = (index + 6); i < (index + 9); i++) {
-        VideoLay[2]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-}
-
-void VisionAlgMain::show_video_16()
-{
-    removelayout();
-    myApp::VideoType = "16";
-    video_max = false;
-    windowNum = 16;
-    change_video_16(0);
-}
-
-void VisionAlgMain::change_video_16(int index)
-{
-    for (int i = (index + 0); i < (index + 4); i++) {
-        VideoLay[0]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-
-    for (int i = (index + 4); i < (index + 8); i++) {
-        VideoLay[1]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-
-    for (int i = (index + 8); i < (index + 12); i++) {
-        VideoLay[2]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-
-    for (int i = (index + 12); i < (index + 16); i++) {
-        VideoLay[3]->addWidget(VideoLab[i]);
-        VideoLab[i]->setVisible(true);
-    }
-}
-
-
-
-//登录
-void VisionAlgMain::login()
-{
-    //防止重复登录
-    if(camera->getIsLogin()==true)
-    {
-        QMessageBox::information(this, tr("login information"), tr("您已经登录"));
-        return;
-    }
-    //登录
-    if(!camera->login())
-    {
-        QMessageBox::information(this, tr("login fail"), tr("请检查网络是否在同一网段,error code=%1").arg(NET_DVR_GetLastError()));
-        return;
-    }
-    //通过SDK获取设备信息
-    if(!camera->setDeviceData())
-    {
-        QMessageBox::information(this, tr("device data fail"), tr("无法获取设备信息，请检查网络,error code=%1").arg(NET_DVR_GetLastError()));
-        return;
-    }
-    //设备信息写成字符串，供左侧树解析
-    QString treedatastring;
-    treedatastring = getStringFromList(camera->listDeviceData);
-    showDeviceTree(treedatastring);
-}
 
 //单击树结点，对一些状态索引进行改变
 void VisionAlgMain::pressedTreeView(const QModelIndex &index)
 {
-    //目的是设置当前有效地设备和通道信息，方案是先区分是设备树，设备还是通道
+    //目的是设置当前有效地设备(DVR)和通道信息(IP Device)，方案是先区分是设备树，设备还是通道
     //然后通过index的parent()和row()值来定位在qlistdevice中的位置和实际内容
-    QMessageBox::information(this, tr("pressedTreeView"),tr("row=%1 colum=%2 data=%3").arg(
-                                 index.row()).arg(index.column()).arg(
-                                 index.data().toString().toLatin1().data()));
+//    QMessageBox::information(this, tr("pressedTreeView"),tr("row=%1 colum=%2 data=%3").arg(
+//                                 index.row()).arg(index.column()).arg(
+//                                 index.data().toString().toLatin1().data()));
     int level = 0;
     QModelIndex tempindex = index;
     while(tempindex.parent().isValid()==1)
@@ -465,6 +265,7 @@ void VisionAlgMain::pressedTreeView(const QModelIndex &index)
         m_qtreemodelindex = index;
         m_iposttreelevel = 2;
     }
+    ui->labMessage->setText(tr("当前选中:%1").arg(index.data().toString()));
 }
 
 //双击树节点
@@ -492,157 +293,57 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
         m_iposttreelevel = 2;
     }
 
-    //双击的是根节点
-    if (m_iposttreelevel == 0)
+    //双击的是根节点或一台设备
+    if (m_iposttreelevel == 0 || m_iposttreelevel==1)
     {
         return;
     }
-    //当前点击的是一台设备，点击设备时播放第一个通道
-    else if (m_iposttreelevel == 1)
-    {
-        int devicerow = index.row();  //获取设备在左侧树的索引,本项目中只有一台DVR，所以devicerouw=0
-        int i=0;
-        QList<DeviceData>::iterator it;
-        for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end();++it)
-        {
-            if (i == devicerow)  //点击第一台的时候就是初始为0的情况，无需做多余操作
-            {
-                break;//以设备名称作为关键字，区别不同设备。
-            }
-            i++;
-        }
-
-        //如果被点击的设备还没有登录
-        if (camera->userId < 0)
-        {
-            int i = -1;
-            //登录
-            i=NET_DVR_Login_V30((*it).getIP().toLatin1().data(), \
-                (*it).getPort(), \
-                (*it).getUsrName().toLatin1().data(), \
-                (*it).getPasswd().toLatin1().data(), \
-                &(*it).m_deviceinfo);
-
-            //登录失败
-            if (-1 == i )
-            {
-                QMessageBox::information(this,tr("NET_DVR_Login_V30"),tr("设备登录失败，SDK_LAST_ERROR=%1").arg(NET_DVR_GetLastError()));
-                //将索引引用的项目设置为折叠或展开，具体取决于展开的值
-                ui->DVRsets_treeView->setExpanded(index, 1);
-                return;
-            }
-            else  //登陆成功
-            {
-                camera->userId = i;
-                (*it).setUsrID(i);
-                QStandardItem *item = m_gmodel->itemFromIndex(index);
-                item->setIcon(QIcon(":/images/login.bmp"));
-            }
-        }
-        m_gcurrentchannelnum = 0;
-        memcpy(&camera->myDeviceInfo.struDeviceV30, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
-        //播放视频
-        if(m_rpstartstopflag==1 && m_guseridbackup!=currentUserId)
-        {
-            realplay();
-        }
-        realplay();
-        m_gchannelnumbackup = 0;
-        ui->DVRsets_treeView->setExpanded(index,0);
-        return;
-    }
-
     //当前点击的是一个通道
     else if (m_iposttreelevel == 2)
     {
         int deviceindex = index.parent().row();  //点击通道所属设备在树中的索引，目前只有一台设备，所以为0
-        int channelindex = index.row();  //点击通道的索引
+        int channelindex = index.row();  //点击通道的索引  目前37台设备（13室内+22楼道+2台人脸考勤机），channelIndex是0~36
 
         //need first find device then channel then set the channel num
         QList<DeviceData>::iterator it;
         QList<ChannelData>::iterator it_channel;
 
         int i=0;
+        //目前只有一台DVR，所以i最后为1
         for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
         {
-            if (i ==deviceindex)
+            if (i == deviceindex)
             {
                 break;
             }
             i++;
         }
-        //如果设备没有登录先登录
-        if (camera->userId < 0)
-        {
-            int ret=-1;
-            ret=NET_DVR_Login_V30((*it).getIP().toLatin1().data(), (*it).getPort(),
-                    (*it).getUsrName().toLatin1().data(),
-                    (*it).getPasswd().toLatin1().data(), &(*it).m_deviceinfo) ;
-            //登录失败
-            if (-1 == ret )
-            {
-                QMessageBox::information(this,tr("NET_DVR_Login_V30"),tr(\
-                    "SDK_LAST_ERROR=%1").arg(NET_DVR_GetLastError()));
-                return;
-            }
-            else  //登录成功
-            {
-                camera->userId = ret;
-                (*it).setUsrID(ret);
-                QStandardItem *item = m_gmodel->itemFromIndex(index.parent());
-                item->setIcon(QIcon(":/images/login.bmp"));
-            }
-        }
-        //目前设备已经登陆成功，开始寻找点击的通道
         memcpy(&camera->myDeviceInfo.struDeviceV30, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
         i=0;
         for (it_channel = (*it).m_qlistchanneldata.begin(); it_channel !=
-                    (*it).m_qlistchanneldata.end();++it_channel)
+                    (*it).m_qlistchanneldata.end();++it_channel)  //这样遍历的目的是为了获取相应的通道（又称IP设备）
         {
             if (i == channelindex)
             {
-                //找到了通道 与上次点击的设备进行比较，处理会不相同
-                if (m_guseridbackup != currentUserId)
+                if(realplayingChanNUm.find(channelindex)!=realplayingChanNUm.end())
                 {
-//                    如果在播放状态先关闭之前的预览
-                    if (m_rpstartstopflag == 1)
-                    {
-                        realplay();
-                    }
-                    realplay();
+                    QMessageBox::information(this, tr("information"),tr("该设备正在播放"));
                 }
                 else
                 {
-                //同一台设备的通道被连续点击两次
-                    if (m_gchannelnumbackup != (*it_channel).getChannelNum())
-                    {
-                        realplay();
-                    }
-
                     realplay();
-
                 }
-
-            m_gchannelnumbackup = (*it_channel).getChannelNum();
-            m_gcurrentchannelnum = (*it_channel).getChannelNum();
             break;
         }
         //没找到则i++
         i++;
     }
-
     return;
     }
 }
 
 void VisionAlgMain::realplay()
 {
-    //User must login.
-    if ( currentUserId < 0)
-    {
-        QMessageBox::information(this,tr("have no login yet"),tr("not login"));
-        return;
-    }
 
     //当前处于停止播放阶段，就开启播放功能
     if (m_rpstartstopflag == 0)
@@ -929,6 +630,253 @@ void VisionAlgMain::stopRealPlayEncapseInterface()
     (*it).setRealPlayLabel(0);
 }
 
+
+
+//系统设置
+void VisionAlgMain::systemSetting()
+{
+    qDebug()<<"系统设置"<<endl;
+}
+
+//离线处理
+void VisionAlgMain::offlinehandle()
+{
+    myOffline = new offline(ui->widget_show);
+    myOffline->setAttribute(Qt::WA_DeleteOnClose);
+    ui->widget_alg->hide();
+    ui->widget_main->hide();
+    //ui->widget_show->hide();
+    myOffline->show();
+    myOffline->move(0,0);
+    connect(ui->btn_onlinehandle, SIGNAL(clicked(bool)), this, SLOT(onlinehandle()));   //在线处理
+    ui->btnMenu_Full->blockSignals(true); //禁用全屏
+    //connect(ui->btnMenu_Full,&QPushButton::clicked,this,&VisionAlgMain::offline_full);
+    //offline o;
+    //o.setGeometry(qApp->desktop()->availableGeometry());
+    //o.exec();
+    //qDebug()<<"离线处理"<<endl;
+    //tracking t;
+    //t.setGeometry(qApp->desktop()->availableGeometry());
+    //t.exec();
+}
+
+void VisionAlgMain::onlinehandle()
+{
+    myOffline->close();
+   // ui->widget_show->show();
+    ui->widget_alg->show();
+    ui->widget_main->show();
+}
+
+void VisionAlgMain::offline_full()
+{
+
+    this->setGeometry(qApp->desktop()->geometry());
+    this->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_menu->setVisible(false);
+    ui->widget_camera->setVisible(false);
+    ui->widget_alg->setVisible(false);
+}
+
+void VisionAlgMain::removelayout()
+{
+    for (int i = 0; i < 4; i++) {
+        VideoLay[0]->removeWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(false);
+    }
+
+    for (int i = 4; i < 8; i++) {
+        VideoLay[1]->removeWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(false);
+    }
+
+    for (int i = 8; i < 12; i++) {
+        VideoLay[2]->removeWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(false);
+    }
+
+    for (int i = 12; i < 16; i++) {
+        VideoLay[3]->removeWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(false);
+    }
+}
+
+void VisionAlgMain::show_video_1()
+{
+    removelayout();
+    myApp::VideoType = "1";
+    video_max = true;
+    change_video_1();
+    windowNum = 1;
+}
+
+void VisionAlgMain::change_video_1(int index)
+{
+    for (int i = (index + 0); i < (index + 1) ; i++) {
+        VideoLay[0]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+}
+
+void VisionAlgMain::show_video_4()
+{
+    removelayout();
+    video_max = false;
+    myApp::VideoType = "4";
+    windowNum = 4;
+    change_video_4();
+}
+
+void VisionAlgMain::change_video_4(int index)
+{
+    for (int i = (index + 0); i < (index + 2); i++) {
+        VideoLay[0]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+
+    for (int i = (index + 2); i < (index + 4); i++) {
+        VideoLay[1]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+}
+
+void VisionAlgMain::show_video_9()
+{
+    removelayout();
+    video_max = false;
+    myApp::VideoType = "9";
+    windowNum = 9;
+    change_video_9(0);
+}
+
+void VisionAlgMain::change_video_9(int index)
+{
+    for (int i = (index + 0); i < (index + 3); i++) {
+        VideoLay[0]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+
+    for (int i = (index + 3); i < (index + 6); i++) {
+        VideoLay[1]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+
+    for (int i = (index + 6); i < (index + 9); i++) {
+        VideoLay[2]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+}
+
+void VisionAlgMain::show_video_16()
+{
+    removelayout();
+    myApp::VideoType = "16";
+    video_max = false;
+    windowNum = 16;
+    change_video_16(0);
+}
+
+void VisionAlgMain::change_video_16(int index)
+{
+    for (int i = (index + 0); i < (index + 4); i++) {
+        VideoLay[0]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+
+    for (int i = (index + 4); i < (index + 8); i++) {
+        VideoLay[1]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+
+    for (int i = (index + 8); i < (index + 12); i++) {
+        VideoLay[2]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+
+    for (int i = (index + 12); i < (index + 16); i++) {
+        VideoLay[3]->addWidget(VideoLab[i]);
+        VideoLab[i]->setVisible(true);
+    }
+}
+
+
+
+//登录
+void VisionAlgMain::login()
+{
+    //防止重复登录
+    if(camera->getIsLogin()==true)
+    {
+        QMessageBox::information(this, tr("login information"), tr("您已经登录"));
+        return;
+    }
+    //登录
+    if(!camera->login())
+    {
+        QMessageBox::information(this, tr("login fail"), tr("请检查网络是否在同一网段,error code=%1").arg(NET_DVR_GetLastError()));
+        return;
+    }
+    //通过SDK获取设备信息
+    if(!camera->setDeviceData())
+    {
+        QMessageBox::information(this, tr("device data fail"), tr("无法获取设备信息，请检查网络,error code=%1").arg(NET_DVR_GetLastError()));
+        return;
+    }
+    ui->labMessage->setText("登录成功");
+    //设备信息写成字符串，供左侧树解析
+    QString treedatastring;
+    treedatastring = getStringFromList(camera->listDeviceData);
+    showDeviceTree(treedatastring);
+}
+
+//注销
+void VisionAlgMain::logoff()
+{
+    int logOffRes = camera->logoff();
+    if(logOffRes==1)  //不存在已登录的用户
+    {
+        QMessageBox::information(this, tr("logout information"),tr("未存在已登录的设备"));
+    }
+    else if(logOffRes==2)  //其他原因
+    {
+        QMessageBox::information(this, tr("login information"),  tr("SDK_LAST_ERROR=%1").arg(NET_DVR_GetLastError()));
+    }
+    else  //注销成功
+    {
+       //加载登出设备标记图片和收起通道
+        if (m_gmodel != NULL)
+        {
+            delete m_gmodel;
+            m_gmodel = NULL;
+            ui->DVRsets_treeView->clearSelection();
+            ui->labMessage->setText("注销成功");
+        }
+    }
+}
+
+//全屏
+void VisionAlgMain::fullScreen()
+{
+    this->setGeometry(qApp->desktop()->geometry());
+    this->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_menu->setVisible(false);
+    ui->widget_camera->setVisible(false);
+    ui->widget_alg->setVisible(false);
+}
+
+//正常屏
+void VisionAlgMain::screen_normal()
+{
+    this->setGeometry(qApp->desktop()->availableGeometry());
+    this->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
+    ui->widget_menu->setVisible(true);
+    ui->widget_camera->setVisible(true);
+    ui->widget_alg->setVisible(true);
+}
+
 //从设备列表中获取设备字符串,该函数主要是为了今后写入文件，保存信息
 QString VisionAlgMain::getStringFromList(QList<DeviceData> & data)
 {
@@ -1051,73 +999,4 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
         ++it;
         deviceindex = tmpindex.child(i,0);
     }
-}
-
-//注销
-void VisionAlgMain::on_btnMenu_Logout_clicked()
-{
-    if(currentUserId<0)
-    {
-        QMessageBox::information(this, tr("logout information"),tr("未存在已登录的设备，双击设备"
-                                                                   "或通道进行登录及播放"));
-    }
-    else
-    {
-       int deviceindex = m_qtreemodelindex.row();
-       int i = 0;
-       QList<DeviceData>::iterator it;
-       for (it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
-       {
-           if(i==deviceindex)
-           {
-               break;
-           }
-           i++;
-       }
-       if((*it).getUsrID()<0)
-       {
-           QMessageBox::information(this, tr("have no login yet"), tr("请点击登录按钮"));
-       }
-       else
-       {
-           if((*it).getRealPlayLabel() == 1)
-           {
-               QMessageBox::information(this, tr("logout error"), tr("请先停止预览"));
-               return;
-           }
-           int ret = NET_DVR_Logout_V30((*it).m_iuserid);
-           (*it).setUsrID(-1);
-           currentUserId = -1;
-           camera->userId = -1;
-
-           //加载登出设备标记图片和收起通道
-           QStandardItem *item = m_gmodel->itemFromIndex(m_qtreemodelindex);
-           item->setIcon(QIcon(":/images/logout.bmp"));
-           ui->DVRsets_treeView->setExpanded(m_qtreemodelindex, 0);
-           QMessageBox::information(this, tr("NET_DVR_Logout_V30"), tr("注销成功"));
-           return;
-       }
-    }
-}
-
-//全屏
-void VisionAlgMain::on_btnMenu_Full_clicked()
-{
-    this->setGeometry(qApp->desktop()->geometry());
-    this->layout()->setContentsMargins(0, 0, 0, 0);
-    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
-    ui->widget_menu->setVisible(false);
-    ui->widget_camera->setVisible(false);
-    ui->widget_alg->setVisible(false);
-}
-
-//正常屏
-void VisionAlgMain::screen_normal()
-{
-    this->setGeometry(qApp->desktop()->availableGeometry());
-    this->layout()->setContentsMargins(0, 0, 0, 0);
-    ui->widget_main->layout()->setContentsMargins(0, 0, 0, 0);
-    ui->widget_menu->setVisible(true);
-    ui->widget_camera->setVisible(true);
-    ui->widget_alg->setVisible(true);
 }

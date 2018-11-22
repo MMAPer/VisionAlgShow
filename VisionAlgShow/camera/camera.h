@@ -7,13 +7,14 @@
 #include "devicedata.h"
 #include "channeldata.h"
 #include <QList>
+#include <map>
 using namespace cv;
-
+using namespace std;
 class Camera
 {
 public:
     friend class VisionAlgMain;
-    Camera();
+    static Camera* getCamera();  //单例模式
     ~Camera();
     //初始化SDK
     bool initSDK();
@@ -22,11 +23,11 @@ public:
 //    Mat getInitFrame();
 //    bool getCurrentFrame();
     //SDK版本号
-    int getMainVersion() const;\
-    int getSubVersion() const;
+    int getMainVersion() const; //主版本号
+    int getSubVersion() const;  //次版本号
     //build信息
-    int getBuildVersion() const;
-    int getBuildNUmber() const;
+    int getBuildVersion() const;  //build版本号
+    int getBuildNUmber() const;  //build号
     //返回是否登录
     bool getIsLogin() const;
     //返回登录ID
@@ -35,8 +36,17 @@ public:
     NET_DVR_DEVICEINFO_V40 getMyDeviceInfo() const;
     //封装设备信息
     bool setDeviceData();
+    //注销摄像头
+    int logoff();
+    //获取IP和摄像头名
+    map<string, string> cameraIp2Name();
 
 private:
+    Camera();
+    //把复制构造函数和=操作符也设为私有，防止被复制
+    Camera(const Camera&);
+    Camera& operator=(const Camera&);
+    static Camera* camera;
     //SDK信息
     int mainVersion;  //主版本号
     int subVersion;  //次版本号

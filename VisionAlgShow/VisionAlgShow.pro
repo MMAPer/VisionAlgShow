@@ -28,32 +28,34 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         visionalgmain.cpp \
-    myapp.cpp \
-    iconhelper.cpp \
     realplay.cpp \
     frameplaywnd.cpp \
-    channeldata.cpp \
-    devicedata.cpp \
-    treeitem.cpp \
-    treemodel.cpp \
     offline.cpp \
     tracking.cpp \
-    camera.cpp
+    camera/camera.cpp \
+    camera/channeldata.cpp \
+    camera/devicedata.cpp \
+    camera/treeitem.cpp \
+    camera/treemodel.cpp \
+    utils/iconhelper.cpp \
+    utils/myapp.cpp \
+    detect/mydetect.cpp
 
 HEADERS  += visionalgmain.h \
-    myapp.h \
-    myhelper.h \
-    iconhelper.h \
     realplay.h \
     frameplaywnd.h \
-    channeldata.h \
-    devicedata.h \
     Public.h \
-    treeitem.h \
-    treemodel.h \
     offline.h \
     tracking.h \
-    camera.h
+    camera/camera.h \
+    camera/channeldata.h \
+    camera/devicedata.h \
+    camera/treeitem.h \
+    camera/treemodel.h \
+    utils/iconhelper.h \
+    utils/myapp.h \
+    utils/myhelper.h \
+    detect/mydetect.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \

@@ -9,13 +9,14 @@
 #include <QModelIndex>
 #include <vector>
 #include <string>
-#include "devicedata.h"
-#include "channeldata.h"
-#include "treeitem.h"
-#include "treemodel.h"
+#include "camera/devicedata.h"
+#include "camera/channeldata.h"
+#include "camera/treeitem.h"
+#include "camera/treemodel.h"
 #include "realplay.h"
 #include "opencv2/opencv.hpp"
 #include <QLabel>
+#include "detect/mydetect.h"
 
 
 namespace Ui {

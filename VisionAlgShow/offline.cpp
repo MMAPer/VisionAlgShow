@@ -1,7 +1,7 @@
 #include "offline.h"
 #include "ui_offline.h"
-#include "iconhelper.h"
-#include "myapp.h"
+#include "utils/iconhelper.h"
+#include "utils/myapp.h"
 #include "QMenu"
 #include "QAction"
 #include "QString"
@@ -352,7 +352,7 @@ void offline::selectScreen(QImage im,int sc)
     if(myApp::VideoType == "4")
     {
         //offlineVideoLabel[sc]->resize(QSize(480,290));
-        offlineVideoLabel[sc]->setPixmap(QPixmap::fromImage(im.scaled(480,290)));
+        offlineVideoLabel[0]->setPixmap(QPixmap::fromImage(im.scaled(480,290)));
             //screenCount++;
 
     }
@@ -738,6 +738,13 @@ void offline::od_alg_ssd()
 
 void offline::od_alg_yolo()
 {
+    YOLODetector *yoloDetector = new YOLODetector();
+    if(yoloDetector->loadNet()==-1)
+    {
+        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
+        return;
+    }
+
     String modelConfiguration = "../../models/detection/yolo/yolov2.cfg";
     String modelBinary = "../../models/detection/yolo/yolov2.weights";
     String classNames ="../../models/detection/yolo/coco.names";
@@ -756,7 +763,6 @@ void offline::od_alg_yolo()
     if (net.empty())
     {
         QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
-
     }
 
     vector<String> classNamesVec;

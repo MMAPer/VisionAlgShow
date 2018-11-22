@@ -9,9 +9,9 @@
 #include <QDebug>
 #include <QList>
 #include "frameplaywnd.h"
-#include "treemodel.h"
-#include "devicedata.h"
-#include "channeldata.h"
+#include "camera/treemodel.h"
+#include "camera/devicedata.h"
+#include "camera/channeldata.h"
 
 //Max num of windows used to preview
 #define REALPLAY_MAX_NUM 16

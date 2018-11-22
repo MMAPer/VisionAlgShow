@@ -1,6 +1,6 @@
 #include "visionalgmain.h"
-#include "myhelper.h"
-#include "myapp.h"
+#include "utils/myhelper.h"
+#include "utils/myapp.h"
 #include "offline.h"
 #include "tracking.h"
 #include <QApplication>
