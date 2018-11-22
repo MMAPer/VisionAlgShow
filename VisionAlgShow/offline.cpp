@@ -274,6 +274,7 @@ void offline::on_btn_open_clicked()
             {
                 videoFlag = 1;
                 capture.open(filePath.toStdString());
+                //screenCount++;
                 //GPU
                 //g_reader = cv::cudacodec::createVideoReader(filePath.toStdString());
                 //g_reader->nextFrame(g_frame);
@@ -285,16 +286,21 @@ void offline::on_btn_open_clicked()
                     if (!frame.empty())
                     {
                         image = Mat2QImage(frame);
-                        selectScreen(image,screenCount);
+                        selectScreen(image,screenCount++);
+                        //qDebug("screenCount:%d", screenCount);
+
                         //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
                         //ui->labelVideo1->setAlignment(Qt::AlignCenter);
                         timer = new QTimer(this);
                         timer->setInterval(1000/rate);   //set timer match with FPS
                         connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
+                        //qDebug("screenCount:%d", screenCount);
+
                         timer->start();
                     }
-                    screenCount++;
+
                 }
+                //screenCount++;
             }
     }
 
@@ -308,7 +314,9 @@ void offline::playbyframe()
         if (!frame.empty())
         {
             image = Mat2QImage(frame);
-            selectScreen(image,screenCount);
+            //qDebug("screenCount2:%d", screenCount);
+
+            selectScreen(image,screenCount-1);
             //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
             //this->update();
         }
@@ -381,7 +389,7 @@ void offline::bgSubtraction()
             Ptr<BackgroundSubtractor> bg_model = createBackgroundSubtractorMOG2();
             bg_model->apply(frame, fgmask);
             image=offline::Mat2QImage(fgmask);
-            selectScreen(image,screenCount);
+            selectScreen(image,screenCount-1);
             //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
             //ui->labelVideo1->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
@@ -413,7 +421,7 @@ void offline::od_alg_hog()
     //cv::imshow("行人检测", image);
     //cv::resize(image, image, Size(480, 290));
     QImage img=offline::Mat2QImage(image);
-    selectScreen(img,screenCount);
+    selectScreen(img,screenCount-1);
     //ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
     //ui->labelVideo1->setAlignment(Qt::AlignCenter);
 
@@ -451,13 +459,13 @@ void offline::od_alg_dpm()
             rectangle(frame, ds[i].rect, color, 2);
         }
 
-    // draw text on image
+    // draw text on imagevivviv
     //String text =format("%0.1f fps",1.0/t);
     //Scalar textColor(0,0,250);
     //putText(frame, text, Point(10,50), FONT_HERSHEY_PLAIN, 2, textColor, 2);
     //cv::resize(frame, frame, Size(480, 290));
     QImage img=offline::Mat2QImage(frame);
-    selectScreen(img,screenCount);
+    selectScreen(img,screenCount-1);
     //ui->labelVideo2->setPixmap(QPixmap::fromImage(img));
     //ui->labelVideo2->setAlignment(Qt::AlignCenter);
 }
@@ -529,7 +537,7 @@ void offline::od_alg_faster_rcnn()
         }
         //cv::resize(img, img, Size(480, 290));
         image=offline::Mat2QImage(img);
-        selectScreen(image,screenCount);
+        selectScreen(image,screenCount-1);
         //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
         //ui->labelVideo1->setAlignment(Qt::AlignCenter);
 
@@ -639,7 +647,7 @@ void offline::od_alg_ssd()
             QImage ssdQImage;
             //cv::resize(ssdFrame, ssdFrame, Size(480, 290));
             ssdQImage=offline::Mat2QImage(ssdFrame);
-            selectScreen(ssdQImage,screenCount);
+            selectScreen(ssdQImage,screenCount-1);
             //ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
             //ui->labelVideo3->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
@@ -723,7 +731,7 @@ void offline::od_alg_ssd()
                 QImage ssdQImage;
                 //cv::resize(ssdImage, ssdImage, Size(480, 290));
                 ssdQImage=offline::Mat2QImage(ssdImage);
-                selectScreen(ssdQImage,screenCount);
+                selectScreen(ssdQImage,screenCount-1);
                 //ui->labelVideo3->setPixmap(QPixmap::fromImage(ssdQImage));
                 //ui->labelVideo3->setAlignment(Qt::AlignCenter);
 
@@ -859,7 +867,7 @@ void offline::od_alg_yolo()
             //cv::resize(yoloFrame, yoloFrame, Size(480, 290));
 
             QImage yoloQImage=offline::Mat2QImage(yoloFrame);
-            selectScreen(yoloQImage,screenCount);
+            selectScreen(yoloQImage,screenCount-1);
             //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
             //ui->labelVideo4->setAlignment(Qt::AlignCenter);
             if (waitKey(1) >= 0) break;
@@ -939,7 +947,7 @@ void offline::od_alg_yolo()
        //cv::resize(yoloImage, yoloImage, Size(480, 290));
 
        QImage yoloQImage=offline::Mat2QImage(yoloImage);
-       selectScreen(yoloQImage,screenCount);
+       selectScreen(yoloQImage,screenCount-1);
        //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
        //ui->labelVideo4->setAlignment(Qt::AlignCenter);
     }
