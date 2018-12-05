@@ -70,7 +70,7 @@ void offline::InitStyle()
 
     //目标检测
     cbox_od = ui->cbox_od;
-    string str_od[] = {"目标检测", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
+    string str_od[] = {"行人检测", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
     vector<string> alg_od(str_od, str_od+6);
     addCboxItem(cbox_od, alg_od);
 
@@ -82,7 +82,7 @@ void offline::InitStyle()
 
     //衣服解析
     cbox_sm = ui->cbox_sm;
-    string str_sm[] = {"衣服解析"};
+    string str_sm[] = {"行人解析"};
     vector<string> alg_sm(str_sm, str_sm+1);
     addCboxItem(cbox_sm, alg_sm);
 

@@ -66,7 +66,7 @@ bool Camera::login()
     qDebug()<<"数字通道起始通道号="<<myDeviceInfo.struDeviceV30.byStartChan;
     BOOL isEncrypt = FALSE;
     BOOL test = NET_DVR_InquestGetEncryptState(this->userId, 1, &isEncrypt);
-    qDebug()<<"码流是否加密："<<test;
+    qDebug()<<"码流是否加密："<<isEncrypt;
     if(this->userId >= 0)
     {
         this->isLogin = true;
@@ -151,40 +151,45 @@ void deviceInfo(NET_DVR_IPPARACFG_V40 ipcfg)
 map<string, string> Camera::cameraIp2Name()
 {
     map<string, string> ip2Name;
-    ip2Name["172.16.27.101"] = "6楼南619";
-    ip2Name["172.16.27.102"] = "6楼北603";
+    ip2Name["172.16.27.101"] = "6楼北611";
+    ip2Name["172.16.27.102"] = "7楼北702";
     ip2Name["172.16.27.103"] = "6楼北605";
     ip2Name["172.16.27.104"] = "6楼北606";
-    ip2Name["172.16.27.105"] = "6楼北608-1";
-    ip2Name["172.16.27.106"] = "6楼北608-2";
-    ip2Name["172.16.27.107"] = "6楼北608-3";
-    ip2Name["172.16.27.109"] = "6楼北611";
+    ip2Name["172.16.27.105"] = "7楼南715";
+//    ip2Name["172.16.27.106"] = "7楼南703";
+    ip2Name["172.16.27.107"] = "6楼南619";
+    ip2Name["172.16.27.108"] = "7楼南706";
+    ip2Name["172.16.27.109"] = "6楼北603";
+    ip2Name["172.16.27.110"] = "7楼南712";
     ip2Name["172.16.27.111"] = "7楼南705";
-    ip2Name["172.16.27.112"] = "7楼南706";
-    ip2Name["172.16.27.113"] = "7楼南712";
-    ip2Name["172.16.27.113"] = "7楼南715";
-    ip2Name["172.16.27.113"] = "7楼北702";
+    ip2Name["172.16.27.112"] = "6楼北608";
+    ip2Name["172.16.27.113"] = "6楼北608科研1";
+    ip2Name["172.16.27.114"] = "6楼北608科研2";
 
-//    ip2Name["172.16.27.120"] = "7楼北702";
-//    ip2Name["172.16.27.121"] = "7楼北702";
-//    ip2Name["172.16.27.122"] = "7楼北702";
-//    ip2Name["172.16.27.123"] = "7楼北702";
-//    ip2Name["172.16.27.124"] = "7楼北702";
-//    ip2Name["172.16.27.125"] = "7楼北702";
-//    ip2Name["172.16.27.126"] = "7楼北702";
-//    ip2Name["172.16.27.127"] = "7楼北702";
-//    ip2Name["172.16.27.128"] = "7楼北702";
-//    ip2Name["172.16.27.129"] = "7楼北702";
-//    ip2Name["172.16.27.130"] = "7楼北702";
-//    ip2Name["172.16.27.131"] = "7楼北702";
-//    ip2Name["172.16.27.132"] = "7楼北702";
-//    ip2Name["172.16.27.133"] = "7楼北702";
-//    ip2Name["172.16.27.134"] = "7楼北702";
-//    ip2Name["172.16.27.135"] = "7楼北702";
-//    ip2Name["172.16.27.136"] = "7楼北702";
-//    ip2Name["172.16.27.137"] = "7楼北702";
-//    ip2Name["172.16.27.138"] = "7楼北702";
-//    ip2Name["172.16.27.139"] = "7楼北702";
+    ip2Name["172.16.27.120"] = "7楼东南走廊西";
+    ip2Name["172.16.27.121"] = "7楼北通道";
+    ip2Name["172.16.27.122"] = "6楼西南走廊东";
+    ip2Name["172.16.27.123"] = "6楼东北走廊西";
+    ip2Name["172.16.27.124"] = "6楼西南走廊西";
+    ip2Name["172.16.27.125"] = "6楼东北走廊东";
+    ip2Name["172.16.27.126"] = "6楼东南走廊东";
+    ip2Name["172.16.27.127"] = "7楼西北走廊西";
+    ip2Name["172.16.27.128"] = "6楼东南走廊西";
+    ip2Name["172.16.27.129"] = "6楼西北走廊西";
+
+    ip2Name["172.16.27.130"] = "6楼西北走廊东";
+    ip2Name["172.16.27.131"] = "7楼东南走廊东";
+    ip2Name["172.16.27.132"] = "6楼门厅北";
+    ip2Name["172.16.27.133"] = "6楼门厅南";
+    ip2Name["172.16.27.134"] = "7楼东北走廊东";
+    ip2Name["172.16.27.135"] = "7楼南通道";
+    ip2Name["172.16.27.136"] = "7楼西南走廊东";
+    ip2Name["172.16.27.137"] = "7楼西南走廊西";
+    ip2Name["172.16.27.138"] = "7楼西北楼梯";
+    ip2Name["172.16.27.139"] = "7楼东北楼梯";
+
+    ip2Name["172.16.27.140"] = "6楼南通道";
+    ip2Name["172.16.27.141"] = "6楼北通道";
     return ip2Name;
 }
 
@@ -215,10 +220,15 @@ bool Camera::setDeviceData()
         {
             if (0 != ipcfg.struStreamMode[i].uGetStream.struChanInfo.byIPID)  //IP设备ID低8位，当设备ID为0时表示通道不可用,目前是从1到37
             {
+                string ip = ipcfg.struIPDevInfo[i].struIP.sIpV4;
+                if(ip=="172.16.27.115" || ip=="172.16.27.153")
+                {
+                    continue;
+                }
                 ChannelData *newChannel = new ChannelData;
 //                QString name="IPCameral";
 //                QString num = QString::number(ipcfg.struStreamMode[i].uGetStream.struChanInfo.byIPID, 10) ;
-                string ip = ipcfg.struIPDevInfo[i].struIP.sIpV4;
+
                 QString name="";
                 if(ip2Name.find(ip)!=ip2Name.end())
                 {
@@ -232,6 +242,7 @@ bool Camera::setDeviceData()
                 newChannel->setChannelNum(ipcfg.struStreamMode[i].uGetStream.struChanInfo.byIPID);  //目前是从1到37
                 newChannel->setProtocolType(TCP);
                 newChannel->setStreamType(MAINSTREAM);
+                newChannel->setRealPlaying(false);
                 //添加进设备节点
                 deviceData->m_qlistchanneldata.append(*newChannel);
                 delete newChannel;

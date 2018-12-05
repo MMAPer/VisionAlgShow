@@ -270,22 +270,12 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btn_alg_fe">
-           <property name="styleSheet">
-            <string notr="true">color:white</string>
-           </property>
-           <property name="text">
-            <string>特征提取</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="btn_alg_od">
            <property name="styleSheet">
             <string notr="true">color:white</string>
            </property>
            <property name="text">
-            <string>目标检测</string>
+            <string>行人检测</string>
            </property>
           </widget>
          </item>
@@ -295,17 +285,7 @@
             <string notr="true">color:white</string>
            </property>
            <property name="text">
-            <string>单目标跟踪</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btn_alg_mot">
-           <property name="styleSheet">
-            <string notr="true">color:white</string>
-           </property>
-           <property name="text">
-            <string>多目标跟踪</string>
+            <string>目标跟踪</string>
            </property>
           </widget>
          </item>
@@ -315,7 +295,17 @@
             <string notr="true">color:white</string>
            </property>
            <property name="text">
-            <string>图像分割</string>
+            <string>行人解析</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_alg_ps">
+           <property name="styleSheet">
+            <string notr="true">color:white</string>
+           </property>
+           <property name="text">
+            <string>行人检索</string>
            </property>
           </widget>
          </item>

@@ -183,3 +183,13 @@ int ChannelData::getRealhandle()
 {
     return m_irealhandle;
 }
+
+void ChannelData::setRealPlaying(bool realPlaying)
+{
+    m_brealplaying = realPlaying;
+}
+
+bool ChannelData::getRealPlaying()
+{
+    return m_brealplaying;
+}

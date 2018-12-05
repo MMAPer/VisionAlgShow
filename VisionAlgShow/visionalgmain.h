@@ -21,6 +21,8 @@
 #include <QMessageBox>
 #include <offline.h>
 #include <set>
+#include "LinuxPlayM4.h"
+#include "utils/parsehelper.h"
 
 /* 说明:主程序
  * 功能:系统运行主程序
@@ -62,8 +64,6 @@ public:
     QString getStringFromList(QList<DeviceData> &data);
 
     //实时播放控制
-    int m_rpstartstopflag;  //停止播放为0，开始播放为1
-    int m_rpuseridbackup;  //实时userid备份
     int m_rpfirstrealhandle;  //第一次播放窗口句柄
     int m_rpcurrentrealhandle;  //当前播放窗口句柄
 
@@ -94,12 +94,15 @@ protected:
 
 private:
     Ui::VisionAlgMain *ui;
+    offline *myOffline;
+
     Camera *camera;
 
     void InitData();  //初始化用户及摄像头设备数据
     void InitStyle();  //初始化样式
     void InitVideo(); //初始化视频布局载体数据
     void InitSlot();  //初始化事件绑定
+
     void removelayout();  //移除所有布局
     void change_video_1(int index=0);  //改变1画面布局
     void change_video_4(int index=0);  //改变4画面布局
@@ -114,14 +117,13 @@ private:
 
     bool video_max;
     int windowNum;  //窗口数
+
     QMenu *menu;  //鼠标右键菜单对象
     QLabel *tempLab;  //临时播放视频的标签
     QList<QLabel *> VideoLab;  //通道显示视频lab载体
     QList<QLayout *>VideoLay;  //通道视频所在lab的layout
 
-    set<int> realplayingChanNUm;
-
-    offline *myOffline;
+    set<int> realplayingChanNum;
 
 };
 

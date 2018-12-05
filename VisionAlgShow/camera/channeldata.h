@@ -39,6 +39,9 @@ public:
     void setRealhandle(int num);
     int getRealhandle();
 
+    void setRealPlaying(bool realPlaying);
+    bool getRealPlaying();
+
 private:
     //通道名称
     QString m_qchannelname;
@@ -50,6 +53,7 @@ private:
     STREAMTYPE m_estreamtype;
     int m_ilinkmode;
     int m_irealhandle;
+    bool m_brealplaying;  //是否正在播放
 };
 
 #endif // CHANNELDATA_H

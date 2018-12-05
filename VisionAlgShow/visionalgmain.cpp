@@ -8,13 +8,17 @@
 #include <QDesktopWidget>
 #include <opencv2/opencv.hpp>
 #include <QSize>
+#include "pthread.h"
 extern VisionAlgMain* visionalgmain;
+
+
+
 
 using namespace cv;
 
 enum DeviceTreeNodeType
 {
-    DeviceTreeNode_ROOT = 1,
+    DeviceTreeNode_ROOT = 0,
     DeviceTreeNode_Device,
     DeviceTreeNode_Channel
 };
@@ -33,10 +37,10 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
 
 VisionAlgMain::~VisionAlgMain()
 {
-    if (m_rpstartstopflag == 1)
-    {
-        stopRealPlay();
-    }
+//    if (m_rpstartstopflag == 1)
+//    {
+//        stopRealPlay();
+//    }
     delete ui;
 }
 
@@ -251,19 +255,14 @@ void VisionAlgMain::pressedTreeView(const QModelIndex &index)
         level++;  //为了判断level是根节点、设备结点、通道结点
         tempindex = tempindex.parent();
     }
-    if(level==0)  //根节点
+    if(level==0)  //设备
     {
         m_iposttreelevel = 0;
     }
-    else if (level==1)  //设备
+    else if(level==1)  //通道
     {
         m_qtreemodelindex = index;
         m_iposttreelevel = 1;
-    }
-    else if(level==2)  //通道
-    {
-        m_qtreemodelindex = index;
-        m_iposttreelevel = 2;
     }
     ui->labMessage->setText(tr("当前选中:%1").arg(index.data().toString()));
 }
@@ -278,38 +277,33 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
         level ++ ;
         tmpindex = tmpindex.parent();
     }
-    if (level == 0)  //根节点
+    if (level == 0)  //设备结点
     {
         m_iposttreelevel= 0;
     }
-    else if (level == 1)  //设备结点
+    else if (level == 1)  //通道结点
     {
-        m_qtreemodelindex = index;
+        m_qtreemodelindex = index;  //QModelIndex m_qtreemodelindex;  //树点击的索引
         m_iposttreelevel = 1;
     }
-    else if (level == 2)  //通道结点
-    {
-        m_qtreemodelindex = index;
-        m_iposttreelevel = 2;
-    }
 
-    //双击的是根节点或一台设备
-    if (m_iposttreelevel == 0 || m_iposttreelevel==1)
+    //双击的是设备
+    if (m_iposttreelevel == 0)
     {
         return;
     }
     //当前点击的是一个通道
-    else if (m_iposttreelevel == 2)
+    else if (m_iposttreelevel == 1)
     {
         int deviceindex = index.parent().row();  //点击通道所属设备在树中的索引，目前只有一台设备，所以为0
-        int channelindex = index.row();  //点击通道的索引  目前37台设备（13室内+22楼道+2台人脸考勤机），channelIndex是0~36
+        int channelindex = index.row();  //点击通道的索引  目前35台设备（13室内+22楼道），channelIndex是0~36
 
         //need first find device then channel then set the channel num
         QList<DeviceData>::iterator it;
         QList<ChannelData>::iterator it_channel;
 
         int i=0;
-        //目前只有一台DVR，所以i最后为1
+        //目前只有一台NVR，所以i最后为1
         for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
         {
             if (i == deviceindex)
@@ -318,50 +312,54 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
             }
             i++;
         }
+
         memcpy(&camera->myDeviceInfo.struDeviceV30, &(*it).m_deviceinfo,sizeof(NET_DVR_DEVICEINFO_V30));
+
         i=0;
+
         for (it_channel = (*it).m_qlistchanneldata.begin(); it_channel !=
                     (*it).m_qlistchanneldata.end();++it_channel)  //这样遍历的目的是为了获取相应的通道（又称IP设备）
         {
             if (i == channelindex)
             {
-                if(realplayingChanNUm.find(channelindex)!=realplayingChanNUm.end())
+                if(!(*it).m_qlistchanneldata[i].getRealPlaying())
                 {
                     QMessageBox::information(this, tr("information"),tr("该设备正在播放"));
                 }
                 else
                 {
                     realplay();
+
                 }
             break;
+            }
+            //没找到则i++
+            i++;
         }
-        //没找到则i++
-        i++;
-    }
     return;
     }
 }
 
 void VisionAlgMain::realplay()
 {
-
     //当前处于停止播放阶段，就开启播放功能
-    if (m_rpstartstopflag == 0)
-    {
-        startRealPlay();
-    }
-    else
-    {
-        //当前处于播放中，就停止播放
-        stopRealPlay();
-        //置标记位
-        m_rpstartstopflag = 0;
-    }
+//    if (m_rpstartstopflag == 0)
+//    {
+//        startRealPlay();
+//    }
+//    else
+//    {
+//        //当前处于播放中，就停止播放
+//        stopRealPlay();
+//        //置标记位
+//        m_rpstartstopflag = 0;
+//    }
+    startRealPlay();
 }
 
 void VisionAlgMain::startRealPlay()
 {
-    //上次被点击树节点的节点类型： 2设备树 3设备 4通道
+    //上次被点击树节点的节点类型： 1设备 2通道
     int nodetype = 0;
     //点击设备在qlistdevice中的序列号
     int devicerow = 0;
@@ -378,7 +376,8 @@ void VisionAlgMain::startRealPlay()
         nodetype++;
         tmpindex = tmpindex.parent();
     }
-    if(nodetype == 2)
+
+    if(nodetype == 1)
     {
         //获取设备序列号，并置通道序列号为0
         devicerow = m_qtreemodelindex.row();
@@ -390,20 +389,21 @@ void VisionAlgMain::startRealPlay()
             devicesubchannelnum++;
             tmpsubindex = m_qtreemodelindex.child(devicesubchannelnum, 0);
         }
-        qDebug()<<devicesubchannelnum;
+        qDebug()<<"devicesubchannelnum = " << devicesubchannelnum;
     }
-    else if(nodetype == 3)
+    else if(nodetype == 2)
     {
         //获取设备和通道序列号
         devicerow = m_qtreemodelindex.parent().row();
         channelrow = m_qtreemodelindex.row();
     }
     //目前播放的窗口数
+    windowNum = 4;
     int realplaytotalnum = windowNum;
     int returnvalue = 0;
 
     //树节点为设备，播放所有通道
-    if(nodetype==2)
+    if(nodetype==1)
     {
         if(realplaytotalnum >= (devicesubchannelnum+1))
         {
@@ -435,7 +435,7 @@ void VisionAlgMain::startRealPlay()
         }
         if(returnvalue==1)
         {
-            m_rpstartstopflag = 1;
+//            m_rpstartstopflag = 1;
         }
     }
     //树节点为通道，仅播放这一路通道
@@ -447,7 +447,7 @@ void VisionAlgMain::startRealPlay()
         int returnvalue = realPlayEncapseInterface(devicerow, channelrow, &tmpclientinfo);
         if (returnvalue == 1)
         {
-            m_rpstartstopflag = 1;
+//            m_rpstartstopflag = 1;
         }
     }
 }
@@ -457,6 +457,7 @@ void VisionAlgMain::stopRealPlay()
 
 }
 
+int nPort = -1;
 
 /**  @fn  void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
  *   @brief data callback funtion
@@ -469,10 +470,49 @@ void VisionAlgMain::stopRealPlay()
  */
 void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
 {
-    if (dwUser != NULL)
-    {
-        qDebug("Demmo lRealHandle[%d]: Get StreamData! Type[%d], BufSize[%d], pBuffer:%p\n", lRealHandle, dwDataType, dwBufSize, pBuffer);
-    }
+
+   DWORD dRet;
+   switch(dwDataType)
+   {
+   case NET_DVR_SYSHEAD: //系统头
+//       if(!PlayM4_GetPort(&nPort))  //获取播放库未使用的通道号
+//       {
+//           break;
+//       }
+//       if(dwBufSize > 0)
+//       {
+//           if(!PlayM4_OpenStream(nPort, pBuffer, dwBufSize, 1024*1024))
+//           {
+//               dRet = PlayM4_GetLastError(nPort);
+//               break;
+//           }
+//           //设置解码回调函数 只解码不显示
+//           if(!PlayM4_SetDecCallBack(nPort, Dec))
+//           {
+//               dRet = PlayM4_GetLastError(nPort);
+//               break;
+//           }
+//           //打开视频解码
+//           if (!PlayM4_Play(nPort, hWnd))
+//           {
+//               dRet = PlayM4_GetLastError(nPort);
+//               break;
+//           }
+//        }
+       break;
+   case NET_DVR_STREAMDATA: //码流数据
+//       if (dwBufSize > 0 && nPort != -1)
+//       {
+//           BOOL inData = PlayM4_InputData(nPort, pBuffer, dwBufSize);
+//           while (!inData)
+//           {
+////               sleep(10);
+//               inData = PlayM4_InputData(nPort, pBuffer, dwBufSize);
+//               cout << (L"PlayM4_InputData failed \n") << endl;
+//           }
+//       }
+       break;
+   }
 }
 
 /*******************************************************************
@@ -485,6 +525,7 @@ void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer
 **********************************************************************/
 int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_DVR_CLIENTINFO *clientinfo)
 {
+    qDebug() << "devicerow = " << devicerow << " channelrow = " << channelrow;
     QList<DeviceData>::iterator it;
     QList<ChannelData>::iterator it_channel;
     //在设备列表中寻找设备节点
@@ -508,6 +549,7 @@ int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_D
         }
         j++;
     }
+    qDebug() << "i = " << i << " j = " << j;
 
     //设置预览打开的相关参数
     clientinfo->lChannel = (*it_channel).getChannelNum();
@@ -515,9 +557,14 @@ int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_D
     char tmp[128] = {0};
     sprintf(tmp, "%s", (*it).getMultiCast().toLatin1().data());
     clientinfo->sMultiCastIP = tmp;
+
+    qDebug() << "clientinfo->lChannel = " << clientinfo->lChannel << " clientinfo->lLinkMode = " << clientinfo->lLinkMode
+             << " clientinfo->sMultiCastIP = " << clientinfo->sMultiCastIP;
+
     //取流显示
     int realhandle = NET_DVR_RealPlay_V30((*it).getUsrID(), clientinfo, RealDataCallBack,NULL,1);
-    qDebug("Demo---Protocal:%d", clientinfo->lLinkMode);
+    qDebug("Demo---Protocal:%d  realhandle=%d", clientinfo->lLinkMode, realhandle);
+
     if (realhandle < 0)
     {
         QMessageBox::information(this, tr("NET_DVR_RealPlay error"), tr("SDK_LASTERROR=%1").arg(NET_DVR_GetLastError()));
@@ -546,7 +593,7 @@ int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_D
             }
         }
         //QMessageBox::information(this,tr("realPlayEncapseInterface"),tr("realhandle =%1").arg(realhandle));
-        m_rpuseridbackup = (*it).getUsrID();
+//        m_rpuseridbackup = (*it).getUsrID();
 
         //设置通道预览句柄
         (*it_channel).setRealhandle(realhandle);
@@ -571,7 +618,7 @@ int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_D
         }
 
         QStandardItem *item = NULL;
-        if (nodetype == 2)
+        if (nodetype == 1)
         {
 
             QModelIndex specialindex = m_qtreemodelindex.child(channelrow,0);
@@ -579,7 +626,7 @@ int VisionAlgMain::realPlayEncapseInterface(int devicerow, int channelrow, NET_D
             item->setIcon(QIcon(":/images/play.bmp"));
 
         }
-        else if (nodetype == 3)
+        else if (nodetype == 2)
         {
             QModelIndex  parentindex = m_qtreemodelindex.parent();
             item = m_gmodel->itemFromIndex(parentindex.child(channelrow,0));
@@ -598,11 +645,11 @@ void VisionAlgMain::stopRealPlayEncapseInterface()
     int i = 0;
     for ( it = camera->listDeviceData.begin(); it != camera->listDeviceData.end(); ++it)
     {
-        if (m_rpuseridbackup == (*it).getUsrID())
-        {
-        //QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("715 i=%1").arg(i));
-            break;
-        }
+//        if (m_rpuseridbackup == (*it).getUsrID())
+//        {
+//        //QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("715 i=%1").arg(i));
+//            break;
+//        }
         //QMessageBox::information(this,tr("stopRealPlayEncapseInterface"),tr("718 i=%1").arg(i));
         i++;
     }
@@ -959,24 +1006,13 @@ void VisionAlgMain::showDeviceTree(const QString &nodedata)
         ui->DVRsets_treeView->setExpanded(tmpindex, 1);
     }
 
-    QModelIndex devicetreeindex = tmpindex;  //根节点
-    QModelIndex deviceindex = tmpindex.child(0,0);
-
-
+    QModelIndex deviceindex = tmpindex;  //根节点  NERCMS_NVR
     QList<DeviceData>::iterator it;  //设备迭代器
     QList<ChannelData>::iterator it_channel;  //通道迭代器
     int i=0;
     it = camera->listDeviceData.begin();
-    while((deviceindex.isValid()==1)&&(it != camera->listDeviceData.end()))
+    while((deviceindex.isValid()==1)&&(it != camera->listDeviceData.end()))  //目前就一台NVR
     {
-        if (it->getUsrID()!=-1)
-        {
-
-            QStandardItem *item = m_gmodel->itemFromIndex(deviceindex);
-            item->setIcon(QIcon(":/images/login.bmp"));
-            ui->DVRsets_treeView->expand(deviceindex);
-            ui->DVRsets_treeView->setExpanded(deviceindex, 1);
-        }
         QModelIndex channelindex = deviceindex.child(0,0);
         it_channel = (*it).m_qlistchanneldata.begin();
         int j=0;

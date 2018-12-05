@@ -25,43 +25,23 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
     QList<TreeItem*> parents;
     parents << parent;
     QStandardItem *parentItem = invisibleRootItem();
- 
-	//QStandardItem *devicetreenode = new QStandardItem(QString("HIKVISION"));
-	//devicetreenode->setEditable(0);
-    
-	
-    //add by pyd
-    QStandardItem *pDeviceRootItem = new QStandardItem(QString("device tree"));
-    //devicetreenode->appendRow(pDeviceRootItem);
+    QStandardItem *pDeviceRootItem = new QStandardItem(QString("NERCMS_NVR"));
     parentItem->appendRow(pDeviceRootItem);
-    pDeviceRootItem->setIcon(QIcon(":/images/tree.bmp"));
-	pDeviceRootItem->setEditable(0);
- 
-	QList<TreeItem*> parents1;
-	QString deviceBegin("<device>");
-	QString deviceEnd("</device>");
-	QString channelBegin("<channel>");
-	QString channelEnd("</channel>");
+    pDeviceRootItem->setIcon(QIcon(":/images/login.bmp"));
+    pDeviceRootItem->setEditable(0);
 
-	QStandardItem *pDeviceItem = NULL;
+	QString channelBegin("<channel>");
+
 	QStandardItem *pChannelItem = NULL;
+
     for ( QStringList::const_iterator it = lines.begin(); it != lines.end(); ++it )
-    {   
-        if ((*it)==deviceBegin)
-        {
-			++it;
-			pDeviceItem = new QStandardItem(*it);
-			pDeviceRootItem->appendRow(pDeviceItem);
-            pDeviceItem->setIcon(QIcon(":/images/logout.bmp"));
-			pDeviceItem->setEditable(0);
-        }
- 
+    {
         QString chn =channelBegin;
         if ((*it)==chn)
         {
 			++it;
 			pChannelItem = new QStandardItem(*it);
-			pDeviceItem->appendRow(pChannelItem);
+            pDeviceRootItem->appendRow(pChannelItem);
             pChannelItem->setIcon(QIcon(":/images/camera.bmp"));
 			pChannelItem->setEditable(0);
         }

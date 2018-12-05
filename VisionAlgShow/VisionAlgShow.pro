@@ -39,7 +39,9 @@ SOURCES += main.cpp\
     camera/treemodel.cpp \
     utils/iconhelper.cpp \
     utils/myapp.cpp \
-    detect/mydetect.cpp
+    detect/mydetect.cpp \
+    sottracker/sottracker.cpp \
+    mottracker/mottracker.cpp
 
 HEADERS  += visionalgmain.h \
     realplay.h \
@@ -55,7 +57,10 @@ HEADERS  += visionalgmain.h \
     utils/iconhelper.h \
     utils/myapp.h \
     utils/myhelper.h \
-    detect/mydetect.h
+    detect/mydetect.h \
+    sottracker/sottracker.h \
+    mottracker/mottracker.h \
+    utils/parsehelper.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \

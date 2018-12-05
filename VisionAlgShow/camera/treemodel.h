@@ -19,7 +19,7 @@ class TreeModel : public QStandardItemModel
 		
 public:
 	
-	void setupModelData(const QStringList &lines, TreeItem *parent);
+    void setupModelData(const QStringList &lines, TreeItem *parent);
     TreeModel(const QString &data, QObject *parent = 0);
     ~TreeModel();
 
