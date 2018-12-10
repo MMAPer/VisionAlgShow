@@ -41,7 +41,8 @@ SOURCES += main.cpp\
     utils/myapp.cpp \
     detect/mydetect.cpp \
     sottracker/sottracker.cpp \
-    mottracker/mottracker.cpp
+    mottracker/mottracker.cpp \
+    algorithms/detect.cpp
 
 HEADERS  += visionalgmain.h \
     realplay.h \
@@ -60,7 +61,8 @@ HEADERS  += visionalgmain.h \
     detect/mydetect.h \
     sottracker/sottracker.h \
     mottracker/mottracker.h \
-    utils/parsehelper.h
+    utils/parsehelper.h \
+    algorithms/detect.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \
