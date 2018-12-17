@@ -2,7 +2,7 @@
 #define CAMERA_H
 
 #include <opencv2/opencv.hpp>
-#include "Public.h"
+#include "public.h"
 #include <iostream>
 #include "devicedata.h"
 #include "channeldata.h"

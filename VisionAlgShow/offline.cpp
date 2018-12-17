@@ -24,7 +24,11 @@
 #include <time.h>
 //#include<opencv2/cudaimgproc.hpp>
 #include <algorithms/detect.h>
-
+using namespace cv;
+using namespace dnn;
+using namespace std;
+using namespace cv::dnn;
+using namespace cv::dpm;
 
 void addCboxItem(QComboBox *target, vector<string> items);
 
@@ -468,8 +472,15 @@ void offline::od_alg_dpm()
 }
 
 void offline::od_alg_faster_rcnn()
-{    
-
+{
+    const char* classNames[] = {
+        "____",
+        "aeroplane", "bicycle", "bird", "boat",
+        "bottle", "bus", "car", "cat", "chair",
+        "cow", "diningtable", "dog", "horse",
+        "motorbike", "person", "pottedplant",
+        "sheep", "sofa", "train", "tvmonitor"
+    };
     if(filePath == NULL)
         QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("当前路径为空,请打开一张图片"));
     else if(videoFlag == 1){
@@ -478,55 +489,109 @@ void offline::od_alg_faster_rcnn()
 
     else{
         FasterRCNNDetector *fasterRCNNDetector = new FasterRCNNDetector();
-        if(fasterRCNNDetector->loadNet() == -1){
-            QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("加载模型失败,请检查模型路径!"));
+        if(fasterRCNNDetector->loadNet()==-1)
+        {
+            QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
             return;
-        }else{
-            Mat inputImg = imread(filePath);
-            vector<BoundingBox> bbox;
-            fasterRCNNDetector->detect(inputImg,bbox);
         }
-        // Draw detections.
-        int left;
-        int top;
-        int right;
-        int bottom;
-        for(int i = 0; i<bbox.size(); i++){
-            // Draw a bounding box.
-            left = bbox[i].x;
-            top = bbox[i].y;
-            right = bbox[i].x + bbox[i].w;
-            bottom = bbox[i].y - bbox[i].h;
-            rectangle(inputImg, Point(left, top), Point(right, bottom), Scalar(0, 255, 0));
-            // Put a label with confidence.
-            String label = cv::format("%.3f", bbox[i].confidence);
+        vector<BoundingBox> bbox ;
+        String imgPath = filePath.toStdString();
+        Mat img = imread(imgPath);
+        fasterRCNNDetector->detect(img,bbox);
 
-            // Draw a confidence box.
+        // Draw detections.
+        for (size_t i = 0; i < bbox.size(); i++){
+
+            //An every bbox is a vector [confidence,x,y,w,h]
+            int left = bbox[i].x;
+            int top = bbox[i].y;
+            int right = bbox[i].x + bbox[i].w;
+            int bottom = bbox[i].y - bbox[i].h;
+
+            // Draw a bounding box.
+            rectangle(img, Point(left, top), Point(right, bottom), Scalar(0, 255, 0));
+
+            // Put a label with a class name and confidence.
+            String label = cv::format("%s, %.3f", bbox[i].confidence);
             int baseLine;
             Size labelSize = cv::getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+
             top = max(top, labelSize.height);
-            rectangle(inputImg, Point(left, top - labelSize.height),
+            rectangle(img, Point(left, top - labelSize.height),
                       Point(left + labelSize.width, top + baseLine),
                       Scalar(255, 255, 255), FILLED);
-            putText(inputImg, label, Point(left, top), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0));
-        }
+            putText(img, label, Point(left, top), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0));
+            }
         //cv::resize(img, img, Size(480, 290));
-        outputImg=offline::Mat2QImage(inputImg);
-        selectScreen(outputImg,screenCount-1);
+        QImage qImg;
+        qImg=offline::Mat2QImage(img);
+        selectScreen(qImg,screenCount-1);
         //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
         //ui->labelVideo1->setAlignment(Qt::AlignCenter);
-    }
+
+        }
+
+//        String protoPath = "../../models/detection/faster_rcnn/faster_rcnn_vgg16.prototxt";
+//        String modelPath = "../../models/detection/faster_rcnn/VGG16_faster_rcnn_final.caffemodel";
+//        String imagePath = filePath.toStdString();
+//        float confThreshold = 0.8;
+//        CV_Assert(!protoPath.empty(), !modelPath.empty(), !imagePath.empty());
+
+//        // Load a model.
+//        Net net = readNetFromCaffe(protoPath, modelPath);
+
+//        Mat img = imread(imagePath);
+//        Mat blob = blobFromImage(img, 1.0, Size(), Scalar(102.9801, 115.9465, 122.7717), false, false);
+//        Mat imInfo = (Mat_<float>(1, 3) << img.rows, img.cols, 1.6f);
+
+//        net.setInput(blob, "data");
+//        net.setInput(imInfo, "im_info");
+
+//        // Draw detections.
+//        Mat detections = net.forward();
+//        const float* data = (float*)detections.data;
+//        for (size_t i = 0; i < detections.total(); i += 7)
+//        {
+//            // An every detection is a vector [id, classId, confidence, left, top, right, bottom]
+//            float confidence = data[i + 2];
+//            if (confidence > confThreshold)
+//            {
+//                int classId = (int)data[i + 1];
+//                int left = max(0, min((int)data[i + 3], img.cols - 1));
+//                int top = max(0, min((int)data[i + 4], img.rows - 1));
+//                int right = max(0, min((int)data[i + 5], img.cols - 1));
+//                int bottom = max(0, min((int)data[i + 6], img.rows - 1));
+
+//                // Draw a bounding box.
+//                rectangle(img, Point(left, top), Point(right, bottom), Scalar(0, 255, 0));
+
+//                // Put a label with a class name and confidence.
+//                String label = cv::format("%s, %.3f", classNames[classId], confidence);
+//                int baseLine;
+//                Size labelSize = cv::getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
+
+//                top = max(top, labelSize.height);
+//                rectangle(img, Point(left, top - labelSize.height),
+//                          Point(left + labelSize.width, top + baseLine),
+//                          Scalar(255, 255, 255), FILLED);
+//                putText(img, label, Point(left, top), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 0));
+//            }
+//        }
+//    }
 }
+
+
 
 void offline::od_alg_ssd()
 {
-
-    const char* classNames[] = {"",
-                                "aeroplane", "bicycle", "bird", "boat",
-                                "bottle", "bus", "car", "cat", "chair",
-                                "cow", "diningtable", "dog", "horse",
-                                "motorbike", "person", "pottedplant",
-                                "sheep", "sofa", "train", "tvmonitor"};
+    const char* classNames[] = {
+        "____",
+        "aeroplane", "bicycle", "bird", "boat",
+        "bottle", "bus", "car", "cat", "chair",
+        "cow", "diningtable", "dog", "horse",
+        "motorbike", "person", "pottedplant",
+        "sheep", "sofa", "train", "tvmonitor"
+    };
     String modelConfiguration = "../../models/detection/ssd/deploy.prototxt";
     String modelBinary = "../../models/detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
     //String filePath = "../../videos/original.mp4";

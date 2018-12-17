@@ -39,15 +39,11 @@ SOURCES += main.cpp\
     camera/treemodel.cpp \
     utils/iconhelper.cpp \
     utils/myapp.cpp \
-    detect/mydetect.cpp \
-    sottracker/sottracker.cpp \
-    mottracker/mottracker.cpp \
     algorithms/detect.cpp
 
 HEADERS  += visionalgmain.h \
     realplay.h \
     frameplaywnd.h \
-    Public.h \
     offline.h \
     tracking.h \
     camera/camera.h \
@@ -58,11 +54,9 @@ HEADERS  += visionalgmain.h \
     utils/iconhelper.h \
     utils/myapp.h \
     utils/myhelper.h \
-    detect/mydetect.h \
-    sottracker/sottracker.h \
-    mottracker/mottracker.h \
     utils/parsehelper.h \
-    algorithms/detect.h
+    algorithms/detect.h \
+    public.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \

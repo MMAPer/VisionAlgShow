@@ -4,7 +4,7 @@
 #include <QtGui>
 #include <QObject>
 #include <QWidget>
-#include "Public.h"
+#include "public.h"
 #include <QMenu>
 #include <QDebug>
 #include <QList>

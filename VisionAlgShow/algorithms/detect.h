@@ -20,7 +20,7 @@ using namespace cv::dpm;
 
 struct BoundingBox
 {
-    int classId;
+    int confidence;
     int x;
     int y;
     int w;
@@ -30,7 +30,7 @@ struct BoundingBox
 class Detector
 {
 public:
-    virtual int detect(Mat &inputImg, vector<BoundingBox> &bbox)
+    virtual void detect(Mat &inputImg, vector<BoundingBox> &bbox)
     {
 
     }
@@ -40,16 +40,9 @@ class FasterRCNNDetector : public Detector
 {
 public:
     int loadNet();
-    int detect(Mat &inputImg, vector<BoundingBox> &bbox) override;
+    void detect(Mat &inputImg, vector<BoundingBox> &bbox) override;
 private:
-    const char* classNames[] = {
-        "____",
-        "aeroplane", "bicycle", "bird", "boat",
-        "bottle", "bus", "car", "cat", "chair",
-        "cow", "diningtable", "dog", "horse",
-        "motorbike", "person", "pottedplant",
-        "sheep", "sofa", "train", "tvmonitor"
-    };
+
     String protoPath = "../../models/detection/faster_rcnn/faster_rcnn_vgg16.prototxt";
     String modelPath = "../../models/detection/faster_rcnn/VGG16_faster_rcnn_final.caffemodel";
     dnn::Net net;
@@ -59,16 +52,9 @@ class SSDDetector : public Detector
 {
 public:
     int loadNet();
-    int detect(Mat &inputImg, vector<BoundingBox> &bbox) override;
+    void detect(Mat &inputImg, vector<BoundingBox> &bbox) override;
 private:
-    const char* classNames[] = {
-        "",
-        "aeroplane", "bicycle", "bird", "boat",
-        "bottle", "bus", "car", "cat", "chair",
-        "cow", "diningtable", "dog", "horse",
-        "motorbike", "person", "pottedplant",
-        "sheep", "sofa", "train", "tvmonitor"
-    };
+
     String protoPath = "../../models/detection/ssd/deploy.prototxt";
     String modelPath = "../../models/detection/ssd/VGG_VOC0712_SSD_300x300_iter_120000.caffemodel";
     dnn::Net net;
@@ -78,7 +64,7 @@ class YOLODetector : public Detector
 {
 public:
     int loadNet();
-    int detect(Mat &inputImg, vector<BoundingBox> &bbox) override;
+    void detect(Mat &inputImg, vector<BoundingBox> &bbox) override;
 private:
     String classNames ="../../models/detection/yolo/coco.names";
     String cfgPath = "../../models/detection/yolo/yolov2.cfg";  //网络结构配置文件

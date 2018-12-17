@@ -2,7 +2,7 @@
 #define TRACKING_H
 
 #include <QDialog>
-#include "Public.h"
+#include "public.h"
 #include <QDialog>
 #include <QList>
 #include <QComboBox>

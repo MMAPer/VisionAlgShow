@@ -5,7 +5,7 @@
 #include <QList>
 
 #include "channeldata.h"
-#include "Public.h"
+#include "public.h"
 
 class ChannelData;
 

@@ -10,7 +10,7 @@
 #include <QAction>
 #include <QString>
 #include <QStandardItem>
-#include "Public.h"
+#include "public.h"
 #include "camera/camera.h"
 #include "camera/devicedata.h"
 #include "camera/channeldata.h"

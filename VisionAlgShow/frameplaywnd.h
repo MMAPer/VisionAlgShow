@@ -3,7 +3,7 @@
 
 #include <QFrame>
 #include "ui_frameplaywnd.h"
-#include "Public.h"
+#include "public.h"
 #include "QResizeEvent"
 #include "QMouseEvent"
 
