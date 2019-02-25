@@ -39,7 +39,9 @@ SOURCES += main.cpp\
     camera/treemodel.cpp \
     utils/iconhelper.cpp \
     utils/myapp.cpp \
-    algorithms/detect.cpp
+    algorithms/detect.cpp \
+    tracker/IOU/iou.cpp \
+    algorithms/common.cpp
 
 HEADERS  += visionalgmain.h \
     realplay.h \
@@ -56,7 +58,9 @@ HEADERS  += visionalgmain.h \
     utils/myhelper.h \
     utils/parsehelper.h \
     algorithms/detect.h \
-    public.h
+    public.h \
+    tracker/IOU/iou.h \
+    algorithms/common.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \

@@ -255,3 +255,106 @@ bool Camera::setDeviceData()
 }
 
 
+
+bool YV12_to_RGB24( char* pYV12,  unsigned char* pRGB24, int iWidth, int iHeight)
+{
+    if(!pYV12 || !pRGB24)
+        return false;
+    const long nYLen = long(iHeight * iWidth);
+    const int nHfWidth = (iWidth>>1);
+    if(nYLen<1 || nHfWidth<1)
+        return false;
+    // yv12数据格式，其中Y分量长度为width * height, U和V分量长度都为width * height / 4
+    // |WIDTH |
+    // y......y--------
+    // y......y   HEIGHT
+    // y......y
+    // y......y--------
+    // v..v
+    // v..v
+    // u..u
+    // u..u
+    char* yData = pYV12;
+    char* vData = &yData[nYLen];
+    char* uData = &vData[nYLen>>2];
+    if(!uData || !vData)
+        return false;
+    // Convert YV12 to RGB24
+    //
+    // formula
+    //                                       [1            1                        1             ]
+    // [r g b] = [y u-128 v-128] [0            0.34375             0             ]
+    //                                       [1.375      0.703125          1.734375]
+    // another formula
+    //                                       [1                   1                      1            ]
+    // [r g b] = [y u-128 v-128] [0                   0.698001         0            ]
+    //                                       [1.370705      0.703125         1.732446]
+    int rgb[3];
+    int i, j, m, n, x, y;
+    m = -iWidth;
+    n = -nHfWidth;
+    for(y=0; y < iHeight; y++)
+    {
+        m += iWidth;
+        if(!(y % 2))
+            n += nHfWidth;
+        for(x=0; x < iWidth; x++)
+        {
+            i = m + x;
+            j = n + (x>>1);
+            rgb[2] = int(yData[i] + 1.370705 * (vData[j] - 128)); // r分量值
+            rgb[1] = int(yData[i] - 0.698001 * (uData[j] - 128)  - 0.703125 * (vData[j] - 128)); // g分量值
+            rgb[0] = int(yData[i] + 1.732446 * (uData[j] - 128)); // b分量值
+            j = nYLen - iWidth - m + x;
+            i = (j<<1) + j;
+            for(j=0; j<3; j++)
+            {
+                if(rgb[j]>=0 && rgb[j]<=255)
+                    pRGB24[i + j] = rgb[j];
+                else
+                    pRGB24[i + j] = (rgb[j] < 0) ? 0 : 255;
+            }
+        }
+    }
+    return true;
+}
+void yv12toYUV(unsigned char *outYuv, char *inYv12, int width, int height,int widthStep)
+{
+    int col,row;
+    unsigned int Y,U,V;
+    int tmp;
+    int idx;
+    //printf("widthStep=%d.\n",widthStep);
+    for (row=0; row<height; row++)
+    {
+        idx=row * widthStep;
+        int rowptr=row*width;
+
+        for (col=0; col<width; col++)
+        {
+            //int colhalf=col>>1;
+            tmp = (row/2)*(width/2)+(col/2);
+            //         if((row==1)&&( col>=1400 &&col<=1600))
+            //         {
+            //          printf("col=%d,row=%d,width=%d,tmp=%d.\n",col,row,width,tmp);
+            //          printf("row*width+col=%d,width*height+width*height/4+tmp=%d,width*height+tmp=%d.\n",row*width+col,width*height+width*height/4+tmp,width*height+tmp);
+            //         }
+            Y=(unsigned int) inYv12[row*width+col];
+            U=(unsigned int) inYv12[width*height+width*height/4+tmp];
+            V=(unsigned int) inYv12[width*height+tmp];
+            //         if ((col==200))
+            //         {
+            //         printf("col=%d,row=%d,width=%d,tmp=%d.\n",col,row,width,tmp);
+            //         printf("width*height+width*height/4+tmp=%d.\n",width*height+width*height/4+tmp);
+            //         return ;
+            //         }
+            if((idx+col*3+2)> (1200 * widthStep))
+            {
+                //printf("row * widthStep=%d,idx+col*3+2=%d.\n",1200 * widthStep,idx+col*3+2);
+            }
+            outYuv[idx+col*3]   = Y;
+            outYuv[idx+col*3+1] = U;
+            outYuv[idx+col*3+2] = V;
+        }
+    }
+}

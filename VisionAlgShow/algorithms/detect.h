@@ -11,6 +11,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/video/background_segm.hpp>
 #include <vector>
+#include "common.h"
 
 using namespace cv;
 using namespace dnn;
@@ -18,14 +19,6 @@ using namespace std;
 using namespace cv::dnn;
 using namespace cv::dpm;
 
-struct BoundingBox
-{
-    int confidence;
-    int x;
-    int y;
-    int w;
-    int h;
-};
 
 class Detector
 {

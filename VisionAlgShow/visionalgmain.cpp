@@ -12,8 +12,6 @@
 extern VisionAlgMain* visionalgmain;
 
 
-
-
 using namespace cv;
 
 enum DeviceTreeNodeType
