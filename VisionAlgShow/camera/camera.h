@@ -41,6 +41,14 @@ public:
     //获取IP和摄像头名
     map<string, string> cameraIp2Name();
 
+    void playOneChannel(int channelNum, int windowNo);
+    void pauseOneChannel(int windowNo);
+    Mat getFrame(int windowNo);
+    pthread_t hThread1;
+    pthread_t hThread2;
+    pthread_t hThread3;
+    pthread_t hThread4;
+
 private:
     Camera();
     //把复制构造函数和=操作符也设为私有，防止被复制

@@ -36,18 +36,88 @@ offline::offline(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::offline)
 {
-
     ui->setupUi(this);
     this->InitStyle();  //初始化样式
     this->InitEvent();  //事件信号与槽绑定
     this->InitOfflineVideo();
-
 }
 
 offline::~offline()
 {
     delete ui;
 }
+
+void offline::od_alg_yolo()
+{
+    yoloDetector = new YOLO_V2("/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.cfg", "/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.weights");
+    if(videoFlag==1)
+    {
+        timer->stop();
+        disconnect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
+        connect(timer, SIGNAL(timeout()), this, SLOT(playYoloV2Detect()));
+        timer->setInterval(1000/25);   //set timer match with FPS
+        //qDebug("screenCount:%d", screenCount);
+        timer->start();
+    }
+
+    else
+    {
+
+       Mat yoloImage;
+       String yoloImagePath=filePath.toStdString();
+       yoloImage=imread(yoloImagePath);
+
+       if (yoloImage.channels() == 4)
+       cvtColor(yoloImage, yoloImage, COLOR_BGRA2BGR);
+
+
+       vector<BoundingBox> boxes = yoloDetector->Detect_yolov2(yoloImage);
+       for (int i = 0; i < boxes.size(); i++) {
+           int x = (int) boxes[i].x;
+           int y = (int) boxes[i].y;
+           int w = (int) boxes[i].w;
+           int h = (int) boxes[i].h;
+           cv::rectangle(yoloImage, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
+       }
+
+       QImage yoloQImage=offline::Mat2QImage(yoloImage);
+       selectScreen(yoloQImage,screenCount-1);
+       //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
+       //ui->labelVideo4->setAlignment(Qt::AlignCenter);
+    }
+
+}
+
+void offline::playYoloV2Detect()
+{
+    Mat yoloFrame;
+    capture >> yoloFrame; // get a new frame from camera/video or read image
+
+    if(yoloFrame.empty())
+    {
+        timer->stop();
+        disconnect(timer, SIGNAL(timeout()), this, SLOT(playYoloV2Detect()));
+        return;
+    }
+
+//    std::cout << yoloFrame.rows << "   "  << yoloFrame.cols << std::endl;
+
+    if (yoloFrame.channels() == 4)
+        cvtColor(yoloFrame, yoloFrame, COLOR_BGRA2BGR);
+
+    vector<BoundingBox> boxes = yoloDetector->Detect_yolov2(yoloFrame);
+    for (int i = 0; i < boxes.size(); i++) {
+        int x = (int) boxes[i].x;
+        int y = (int) boxes[i].y;
+        int w = (int) boxes[i].w;
+        int h = (int) boxes[i].h;
+        cv::rectangle(yoloFrame, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
+    }
+
+    QImage yoloQImage=offline::Mat2QImage(yoloFrame);
+    selectScreen(yoloQImage,screenCount-1);
+}
+
 
 void offline::InitStyle()
 {
@@ -137,7 +207,7 @@ void offline::InitOfflineVideo()
     offlineMenu->addAction("切换到1画面", this, SLOT(show_video_1()));
     offlineMenu->addAction("切换到4画面", this, SLOT(show_video_4()));
     offlineTempLabel = offlineVideoLabel[0];
-    show_video_4();
+    show_video_1();
 }
 
 void offline::removeLayout()
@@ -307,6 +377,8 @@ void offline::on_btn_open_clicked()
 
 
 }
+
+
 
 //auto play by frame
 void offline::playbyframe()
@@ -783,216 +855,6 @@ void offline::od_alg_ssd()
 
 }
 
-void offline::od_alg_yolo()
-{
-//    YOLODetector *yoloDetector = new YOLODetector();
-//    if(yoloDetector->loadNet()==-1)
-//    {
-//        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
-//        return;
-//    }
-
-    String modelConfiguration = "../../models/detection/yolo/yolov2.cfg";
-    String modelBinary = "../../models/detection/yolo/yolov2.weights";
-    String classNames ="../../models/detection/yolo/coco.names";
-    //String source = filePath.toStdString();
-    //String  out = "../../images/output.jpg";
-    String object_roi_style = "box";   // box or line style draw
-    //int cameraDevice = 0;
-    //double fps = 3;
-    float confidenceThreshold = 0.24;
-
-
-    //! [Initialize network]
-    dnn::Net net = readNetFromDarknet(modelConfiguration, modelBinary);
-    //! [Initialize network]
-
-    if (net.empty())
-    {
-        QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("无法加载模型及配置文件"));
-    }
-
-    vector<String> classNamesVec;
-    ifstream classNamesFile(classNames.c_str());
-    if (classNamesFile.is_open())
-    {
-        string className = "";
-        while (std::getline(classNamesFile, className))
-            classNamesVec.push_back(className);
-    }
-    if(videoFlag==1)
-    {
-        timer->stop();
-        //capture.release();
-        //VideoCapture cap;
-        //cap.open("/home/mmap/work/VisionAlgShow/videos/1026.mp4");
-        for(;;)
-        {
-            Mat yoloFrame;
-            capture >> yoloFrame; // get a new frame from camera/video or read image
-
-            if (yoloFrame.empty())
-            {
-                waitKey();
-                break;
-            }
-
-            if (yoloFrame.channels() == 4)
-                cvtColor(yoloFrame, yoloFrame, COLOR_BGRA2BGR);
-
-            //! [Prepare blob]
-            Mat inputBlob = blobFromImage(yoloFrame, 1 / 255.F, Size(416, 416), Scalar(), true, false); //Convert Mat to batch of images
-            //! [Prepare blob]
-
-            //! [Set input blob]
-            net.setInput(inputBlob, "data");                   //set the network input
-            //! [Set input blob]
-
-            //! [Make forward pass]
-            Mat detectionMat = net.forward("detection_out");   //compute output
-            //! [Make forward pass]
-
-            vector<double> layersTimings;
-            double tick_freq = getTickFrequency();
-            double time_ms = net.getPerfProfile(layersTimings) / tick_freq * 1000;
-            putText(yoloFrame, format("YOLO FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
-                    Point(20, 20), 0, 0.5, Scalar(0, 0, 255));
-
-            //float confidenceThreshold = parser.get<float>("min_confidence");
-            for (int i = 0; i < detectionMat.rows; i++)
-            {
-                const int probability_index = 5;
-                const int probability_size = detectionMat.cols - probability_index;
-                float *prob_array_ptr = &detectionMat.at<float>(i, probability_index);
-
-                size_t objectClass = max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
-                float confidence = detectionMat.at<float>(i, (int)objectClass + probability_index);
-
-                if (confidence > confidenceThreshold)
-                {
-                    float x_center = detectionMat.at<float>(i, 0) * yoloFrame.cols;
-                    float y_center = detectionMat.at<float>(i, 1) * yoloFrame.rows;
-                    float width = detectionMat.at<float>(i, 2) * yoloFrame.cols;
-                    float height = detectionMat.at<float>(i, 3) * yoloFrame.rows;
-                    Point p1(cvRound(x_center - width / 2), cvRound(y_center - height / 2));
-                    Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
-                    Rect object(p1, p2);
-
-                    Scalar object_roi_color(0, 255, 0);
-
-                    if (object_roi_style == "box")
-                    {
-                        rectangle(yoloFrame, object, object_roi_color);
-                    }
-                    else
-                    {
-                        Point p_center(cvRound(x_center), cvRound(y_center));
-                        line(yoloFrame, object.tl(), p_center, object_roi_color, 1);
-                    }
-
-                    String className = objectClass < classNamesVec.size() ? classNamesVec[objectClass] : cv::format("unknown(%d)", objectClass);
-                    String label = format("%s: %.2f", className.c_str(), confidence);
-                    int baseLine = 0;
-                    Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-                    rectangle(yoloFrame, Rect(p1, Size(labelSize.width, labelSize.height + baseLine)),
-                              object_roi_color, FILLED);
-                    putText(yoloFrame, label, p1 + Point(0, labelSize.height),
-                            FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
-                }
-            }
-
-            //imshow("YOLO: Detections", frame);
-            //if (waitKey(1) >= 0) break;
-            //cv::resize(yoloFrame, yoloFrame, Size(480, 290));
-
-            QImage yoloQImage=offline::Mat2QImage(yoloFrame);
-            selectScreen(yoloQImage,screenCount-1);
-            //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
-            //ui->labelVideo4->setAlignment(Qt::AlignCenter);
-            if (waitKey(1) >= 0) break;
-
-
-        }
-    }
-
-    else
-    {
-
-       Mat yoloImage;
-       String yoloImagePath=filePath.toStdString();
-       yoloImage=imread(yoloImagePath);
-
-       if (yoloImage.channels() == 4)
-       cvtColor(yoloImage, yoloImage, COLOR_BGRA2BGR);
-
-       //! [Prepare blob]
-       Mat inputBlob = blobFromImage(yoloImage, 1 / 255.F, Size(416, 416), Scalar(), true, false); //Convert Mat to batch of images
-       //! [Prepare blob]
-
-       //! [Set input blob]
-       net.setInput(inputBlob, "data");                   //set the network input
-       //! [Set input blob]
-
-       //! [Make forward pass]
-       Mat detectionMat = net.forward("detection_out");   //compute output
-       //! [Make forward pass]
-
-       vector<double> layersTimings;
-       double tick_freq = getTickFrequency();
-       double time_ms = net.getPerfProfile(layersTimings) / tick_freq * 1000;
-       putText(yoloImage, format("FPS: %.2f ; time: %.2f ms", 1000.f / time_ms, time_ms),
-               Point(20, 20), 0, 0.5, Scalar(0, 0, 255));
-       for (int i = 0; i < detectionMat.rows; i++)
-       {
-           const int probability_index = 5;
-           const int probability_size = detectionMat.cols - probability_index;
-           float *prob_array_ptr = &detectionMat.at<float>(i, probability_index);
-
-           size_t objectClass = max_element(prob_array_ptr, prob_array_ptr + probability_size) - prob_array_ptr;
-           float confidence = detectionMat.at<float>(i, (int)objectClass + probability_index);
-
-           if (confidence > confidenceThreshold)
-           {
-               float x_center = detectionMat.at<float>(i, 0) * yoloImage.cols;
-               float y_center = detectionMat.at<float>(i, 1) * yoloImage.rows;
-               float width = detectionMat.at<float>(i, 2) * yoloImage.cols;
-               float height = detectionMat.at<float>(i, 3) * yoloImage.rows;
-               Point p1(cvRound(x_center - width / 2), cvRound(y_center - height / 2));
-               Point p2(cvRound(x_center + width / 2), cvRound(y_center + height / 2));
-               Rect object(p1, p2);
-
-               Scalar object_roi_color(0, 255, 0);
-
-               if (object_roi_style == "box")
-               {
-                   rectangle(yoloImage, object, object_roi_color);
-               }
-               else
-               {
-                   Point p_center(cvRound(x_center), cvRound(y_center));
-                   line(yoloImage, object.tl(), p_center, object_roi_color, 1);
-               }
-
-               String className = objectClass < classNamesVec.size() ? classNamesVec[objectClass] : cv::format("unknown(%d)", objectClass);
-               String label = format("%s: %.2f", className.c_str(), confidence);
-               int baseLine = 0;
-               Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-               rectangle(yoloImage, Rect(p1, Size(labelSize.width, labelSize.height + baseLine)),
-                         object_roi_color, FILLED);
-               putText(yoloImage, label, p1 + Point(0, labelSize.height),
-                       FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
-           }
-       }
-       //cv::resize(yoloImage, yoloImage, Size(480, 290));
-
-       QImage yoloQImage=offline::Mat2QImage(yoloImage);
-       selectScreen(yoloQImage,screenCount-1);
-       //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
-       //ui->labelVideo4->setAlignment(Qt::AlignCenter);
-    }
-
-
-}
 
 
 

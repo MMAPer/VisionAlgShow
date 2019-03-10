@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 
+
 struct BoundingBox
 {
     float x;  // x-component of top left coordinate

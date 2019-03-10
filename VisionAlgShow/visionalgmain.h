@@ -10,6 +10,7 @@
 #include <QAction>
 #include <QString>
 #include <QStandardItem>
+#include <QTimer>
 #include "public.h"
 #include "camera/camera.h"
 #include "camera/devicedata.h"
@@ -23,6 +24,7 @@
 #include <set>
 #include "LinuxPlayM4.h"
 #include "utils/parsehelper.h"
+#include "algorithms/yolov2.h"
 
 
 /* 说明:主程序
@@ -50,15 +52,12 @@ public:
 
     //控制标识符
     int currentWinIndex;  //当前选择的屏幕索引
-    int m_iposttreelevel;  //点击的树节点的层级：0表示设备树根节点  1表示NVR设备  2表示通道（也称IP设备）
+    int m_iposttreelevel;  //点击的树节点的层级：0表示设备节点  1表示通道（也称IP设备）
     int m_rpwindownumindex;  //窗口数量选择按钮的索引
     QModelIndex m_qtreemodelindex;  //树点击的索引
 
     //用户及摄像头设备信息
     int m_gcurrentchannelnum;  //当前通道
-    int m_gchannelnumbackup;  //当前通道备份，用于作比较的
-    int m_gcurrentchannellinkmode;  //通道链接模式
-
     TreeModel *m_gmodel;  //自定义数据类型，包括设备及通道数据的封装
 
     void showDeviceTree(const QString &nodedata);  //根据字符串显示左侧树结构
@@ -67,6 +66,10 @@ public:
     //实时播放控制
     int m_rpfirstrealhandle;  //第一次播放窗口句柄
     int m_rpcurrentrealhandle;  //当前播放窗口句柄
+
+    QTimer *timer1, *timer2, *timer3, *timer4;
+    YOLO_V2 *yoloDetector;
+
 
 //槽函数
 private slots:
@@ -88,6 +91,8 @@ private slots:
     //左侧树形结构
     void pressedTreeView(const QModelIndex &);  //用户点击树的结点时，要对相应的索引标识符做改变
     void OnDoubleClickTree(const QModelIndex &);  //双击播放
+
+    void playTimer();  // 播放使用QTimer触发
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
@@ -124,7 +129,8 @@ private:
     QList<QLabel *> VideoLab;  //通道显示视频lab载体
     QList<QLayout *>VideoLay;  //通道视频所在lab的layout
 
-    set<int> realplayingChanNum;
+    int labPlayStatus[16] = {0};
+    int labPlayChannelBackup[16] = {0};
 
 };
 

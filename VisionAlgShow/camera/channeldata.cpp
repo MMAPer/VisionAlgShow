@@ -8,6 +8,7 @@ ChannelData::ChannelData()
 	m_irealhandle = -1;
     m_eprotocoltype = TCP;
     m_estreamtype = MAINSTREAM;
+    m_brealplaying = false;
 }
 
 

@@ -41,7 +41,8 @@ SOURCES += main.cpp\
     utils/myapp.cpp \
     algorithms/detect.cpp \
     tracker/IOU/iou.cpp \
-    algorithms/common.cpp
+    algorithms/common.cpp \
+    algorithms/yolov2.cpp
 
 HEADERS  += visionalgmain.h \
     realplay.h \
@@ -60,7 +61,8 @@ HEADERS  += visionalgmain.h \
     algorithms/detect.h \
     public.h \
     tracker/IOU/iou.h \
-    algorithms/common.h
+    algorithms/common.h \
+    algorithms/yolov2.h
 
 FORMS    += visionalgmain.ui \
     realplay.ui \

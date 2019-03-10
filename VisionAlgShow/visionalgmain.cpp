@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <QSize>
 #include "pthread.h"
+#include "algorithms/common.h"
 extern VisionAlgMain* visionalgmain;
 
 
@@ -26,6 +27,12 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
     ui(new Ui::VisionAlgMain)
 {
     ui->setupUi(this);
+    timer1 = new QTimer();
+    timer2 = new QTimer();
+    timer3 = new QTimer();
+    timer4 = new QTimer();
+    yoloDetector = new YOLO_V2("/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.cfg", "/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.weights");
+
     this->InitCamera();  //初始化SDK
     this->InitData();
     this->InitStyle();  //初始化样式
@@ -35,11 +42,35 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
 
 VisionAlgMain::~VisionAlgMain()
 {
-//    if (m_rpstartstopflag == 1)
-//    {
-//        stopRealPlay();
-//    }
     delete ui;
+}
+
+QImage Mat2QImage(cv::Mat cvImg)
+{
+    QImage qImg;
+    if(cvImg.channels()==3)                             //3 channels color image
+    {
+        cv::cvtColor(cvImg,cvImg,CV_BGR2RGB);
+        qImg =QImage((const unsigned char*)(cvImg.data),
+                    cvImg.cols, cvImg.rows,
+                    cvImg.cols*cvImg.channels(),
+                    QImage::Format_RGB888);
+    }
+    else if(cvImg.channels()==1)                    //grayscale image
+    {
+        qImg =QImage((const unsigned char*)(cvImg.data),
+                    cvImg.cols,cvImg.rows,
+                    cvImg.cols*cvImg.channels(),
+                    QImage::Format_Indexed8);
+    }
+    else
+    {
+        qImg =QImage((const unsigned char*)(cvImg.data),
+                    cvImg.cols,cvImg.rows,
+                    cvImg.cols*cvImg.channels(),
+                    QImage::Format_RGB888);
+    }
+    return qImg;
 }
 
 //初始化摄像头对象及海康SDK
@@ -70,8 +101,6 @@ void VisionAlgMain::InitData()
 {
     currentWinIndex = 0;  //默认当前选择第一块屏,自定义窗口数组，从0开始计数
     m_gcurrentchannelnum = 1;  //当前选择通道,通道数是从1开始计数，由海康SDK决定的
-    m_gchannelnumbackup = 1;  //用于备份上个点击的通道
-    m_gcurrentchannellinkmode = 0x0;  //当前通道链接模式
     m_gmodel = NULL;  //当前的自定义TreeModel数据  重写了QStandardItemModel
 }
 
@@ -123,7 +152,6 @@ void VisionAlgMain::InitStyle()
     ui->btn_onlinehandle->setText("在线处理");
     ui->btn_onlinehandle->setFixedSize(64,64);
 
-
     //设置窗体标题栏隐藏--Qt::WindowStaysOnTopHint |
 //    this->setWindowFlags(Qt::FramelessWindowHint |
 //                         Qt::WindowSystemMenuHint |
@@ -136,7 +164,6 @@ void VisionAlgMain::InitStyle()
     //ui->label_title->setText(myApp::AppTitle);
     this->setWindowTitle(myApp::AppTitle);
     //ui->widget_title->setStyleSheet("background-color:#eeeeee;");
-
 }
 
 
@@ -188,7 +215,6 @@ void VisionAlgMain::InitVideo()
 void VisionAlgMain::InitSlot()
 {
     //添加事件监听器
-    ui->btn_offlinehandle->installEventFilter(this);
     //左侧树监听事件
     ui->DVRsets_treeView->setMouseTracking(1);
     connect(ui->DVRsets_treeView, SIGNAL(pressed(const QModelIndex &)),
@@ -202,6 +228,29 @@ void VisionAlgMain::InitSlot()
     connect(ui->btnMenu_Logout, SIGNAL(clicked(bool)), this, SLOT(logoff()));  //注销
     connect(ui->btn_offlinehandle, SIGNAL(clicked(bool)), this, SLOT(offlinehandle()));  //离线处理
 
+    connect(timer1,SIGNAL(timeout()),this,SLOT(playTimer()));
+    connect(timer2,SIGNAL(timeout()),this,SLOT(playTimer()));
+    connect(timer3,SIGNAL(timeout()),this,SLOT(playTimer()));
+    connect(timer4,SIGNAL(timeout()),this,SLOT(playTimer()));
+
+}
+
+void VisionAlgMain::playTimer()
+{
+    int index = sender()->property("index").toInt();
+    Mat image = camera->getFrame(index);
+    cv::resize(image, image, cv::Size(490, 320), (0, 0), (0, 0), cv::INTER_LINEAR);
+
+    vector<BoundingBox> boxes = yoloDetector->Detect_yolov2(image);
+    for (int i = 0; i < boxes.size(); i++) {
+        int x = (int) boxes[i].x;
+        int y = (int) boxes[i].y;
+        int w = (int) boxes[i].w;
+        int h = (int) boxes[i].h;
+        cv::rectangle(image, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
+    }
+
+    VideoLab[index]->setPixmap(QPixmap::fromImage(Mat2QImage(image).scaled(490,320)));
 }
 
 //通过注册事件监听器绑定事件
@@ -215,7 +264,17 @@ bool VisionAlgMain::eventFilter(QObject *obj, QEvent *event)
             tempLab = qobject_cast<QLabel *>(obj);
             menu->exec(QCursor::pos());
             return true;
-        }
+        } else if(MouseEvent->buttons() == Qt::LeftButton)
+       {
+           tempLab = qobject_cast<QLabel *>(obj);
+           for(int i=0; i<VideoLab.size(); i++)
+           {
+               if(tempLab == VideoLab[i])
+               {
+                   currentWinIndex = i;
+               }
+           }
+       }
     }
     return QObject::eventFilter(obj, event);
 }
@@ -265,6 +324,8 @@ void VisionAlgMain::pressedTreeView(const QModelIndex &index)
     ui->labMessage->setText(tr("当前选中:%1").arg(index.data().toString()));
 }
 
+
+
 //双击树节点
 void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
 {
@@ -294,7 +355,7 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
     else if (m_iposttreelevel == 1)
     {
         int deviceindex = index.parent().row();  //点击通道所属设备在树中的索引，目前只有一台设备，所以为0
-        int channelindex = index.row();  //点击通道的索引  目前35台设备（13室内+22楼道），channelIndex是0~36
+        int channelindex = index.row();  //点击通道的索引  目前37台设备（13室内+22楼道+2台考勤机），channelIndex是0~36
 
         //need first find device then channel then set the channel num
         QList<DeviceData>::iterator it;
@@ -320,13 +381,86 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
         {
             if (i == channelindex)
             {
-                if(!(*it).m_qlistchanneldata[i].getRealPlaying())
+
+                // play logic--------------------------------------------------------------------
+                if((*it).m_qlistchanneldata[i].getRealPlaying())
                 {
                     QMessageBox::information(this, tr("information"),tr("该设备正在播放"));
                 }
                 else
                 {
-                    realplay();
+                    int index = currentWinIndex;
+
+                    if(labPlayStatus[index])  // replace
+                    {
+                        (*it).m_qlistchanneldata[(labPlayChannelBackup[index]-1)].setRealPlaying(false);
+                        camera->pauseOneChannel(index);
+
+                        int channelNum = (*it).m_qlistchanneldata[i].getChannelNum();
+                        camera->playOneChannel(channelNum, index);
+                        (*it).m_qlistchanneldata[i].setRealPlaying(true);
+                        labPlayStatus[index] = 1;
+                        switch(index)
+                        {
+                        case 0:
+                            timer1->stop();
+                            timer1->setProperty("index", 0);
+                            timer1->start(1000/25);
+                            break;
+                        case 1:
+                            timer2->stop();
+                            timer2->setProperty("index", 1);
+                            timer2->start(1000/25);
+                            break;
+                        case 2:
+                            timer3->stop();
+                            timer3->setProperty("index", 2);
+                            timer3->start(1000/25);
+                            break;
+                        case 3:
+                            timer4->stop();
+                            timer4->setProperty("index", 3);
+                            timer4->start(1000/25);
+                            break;
+                        }
+                    }
+
+                    else  // play
+                    {
+                        int channelNum = (*it).m_qlistchanneldata[i].getChannelNum();
+                        camera->playOneChannel(channelNum, index);
+                        (*it).m_qlistchanneldata[i].setRealPlaying(true);
+                        labPlayStatus[index] = 1;
+                        labPlayChannelBackup[index] = channelNum;
+                        switch(index)
+                        {
+                        case 0:
+                            timer1->setProperty("index", 0);
+                            timer1->start(1000/25);
+                            break;
+                        case 1:
+                            timer2->setProperty("index", 1);
+                            timer2->start(1000/25);
+                            break;
+                        case 2:
+                            timer3->setProperty("index", 2);
+                            timer3->start(1000/25);
+                            break;
+                        case 3:
+                            timer4->setProperty("index", 3);
+                            timer4->start(1000/25);
+                            break;
+                        }
+                    }
+
+//                        while(1)
+//                        {
+//                            Mat image = camera->getFrame(index);
+//                            cv::resize(image, image, cv::Size(490, 320), (0, 0), (0, 0), cv::INTER_LINEAR);
+//                            VideoLab[index]->setPixmap(QPixmap::fromImage(Mat2QImage(image).scaled(490,320)));
+//                            imshow("test1", image);
+//                            waitKey(1);
+//                        }
 
                 }
             break;
@@ -338,22 +472,8 @@ void VisionAlgMain::OnDoubleClickTree(const QModelIndex &index)
     }
 }
 
-void VisionAlgMain::realplay()
-{
-    //当前处于停止播放阶段，就开启播放功能
-//    if (m_rpstartstopflag == 0)
-//    {
-//        startRealPlay();
-//    }
-//    else
-//    {
-//        //当前处于播放中，就停止播放
-//        stopRealPlay();
-//        //置标记位
-//        m_rpstartstopflag = 0;
-//    }
-    startRealPlay();
-}
+
+
 
 void VisionAlgMain::startRealPlay()
 {
@@ -455,7 +575,6 @@ void VisionAlgMain::stopRealPlay()
 
 }
 
-int nPort = -1;
 
 /**  @fn  void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
  *   @brief data callback funtion
@@ -469,48 +588,7 @@ int nPort = -1;
 void __stdcall  RealDataCallBack(LONG lRealHandle,DWORD dwDataType,BYTE *pBuffer,DWORD  dwBufSize, void* dwUser)
 {
 
-   DWORD dRet;
-   switch(dwDataType)
-   {
-   case NET_DVR_SYSHEAD: //系统头
-//       if(!PlayM4_GetPort(&nPort))  //获取播放库未使用的通道号
-//       {
-//           break;
-//       }
-//       if(dwBufSize > 0)
-//       {
-//           if(!PlayM4_OpenStream(nPort, pBuffer, dwBufSize, 1024*1024))
-//           {
-//               dRet = PlayM4_GetLastError(nPort);
-//               break;
-//           }
-//           //设置解码回调函数 只解码不显示
-//           if(!PlayM4_SetDecCallBack(nPort, Dec))
-//           {
-//               dRet = PlayM4_GetLastError(nPort);
-//               break;
-//           }
-//           //打开视频解码
-//           if (!PlayM4_Play(nPort, hWnd))
-//           {
-//               dRet = PlayM4_GetLastError(nPort);
-//               break;
-//           }
-//        }
-       break;
-   case NET_DVR_STREAMDATA: //码流数据
-//       if (dwBufSize > 0 && nPort != -1)
-//       {
-//           BOOL inData = PlayM4_InputData(nPort, pBuffer, dwBufSize);
-//           while (!inData)
-//           {
-////               sleep(10);
-//               inData = PlayM4_InputData(nPort, pBuffer, dwBufSize);
-//               cout << (L"PlayM4_InputData failed \n") << endl;
-//           }
-//       }
-       break;
-   }
+
 }
 
 /*******************************************************************

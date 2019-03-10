@@ -16,6 +16,7 @@
 #include "realplay.h"
 #include "opencv2/opencv.hpp"
 #include <QLabel>
+#include "algorithms/yolov2.h"
 
 
 
@@ -47,6 +48,8 @@ public:
     int videoFlag=0;
     QString filePath;
     QString fileSuffix;
+
+    YOLO_V2 *yoloDetector;
     //cv::cuda::GpuMat g_frame;
     //cv::Ptr<cv::cudacodec::VideoReader> g_reader;
 
@@ -61,6 +64,8 @@ private slots:
 
     void on_btn_open_clicked();
     void playbyframe();
+
+    void playYoloV2Detect();
 
     //object detection algorithms
     void od_alg_hog();
