@@ -25,6 +25,7 @@
 #include "LinuxPlayM4.h"
 #include "utils/parsehelper.h"
 #include "algorithms/yolov2.h"
+#include "tracker/IOU/iou.h"
 
 
 /* 说明:主程序
@@ -69,6 +70,8 @@ public:
 
     QTimer *timer1, *timer2, *timer3, *timer4;
     YOLO_V2 *yoloDetector;
+    IOUTracker *iouTracker;
+
 
 
 //槽函数

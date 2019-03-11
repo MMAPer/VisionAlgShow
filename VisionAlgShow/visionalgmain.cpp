@@ -32,6 +32,7 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
     timer3 = new QTimer();
     timer4 = new QTimer();
     yoloDetector = new YOLO_V2("/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.cfg", "/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.weights");
+    iouTracker = new IOUTracker();
 
     this->InitCamera();  //初始化SDK
     this->InitData();
@@ -242,12 +243,14 @@ void VisionAlgMain::playTimer()
     cv::resize(image, image, cv::Size(490, 320), (0, 0), (0, 0), cv::INTER_LINEAR);
 
     vector<BoundingBox> boxes = yoloDetector->Detect_yolov2(image);
+    iouTracker->track_iou(boxes);
     for (int i = 0; i < boxes.size(); i++) {
         int x = (int) boxes[i].x;
         int y = (int) boxes[i].y;
         int w = (int) boxes[i].w;
         int h = (int) boxes[i].h;
         cv::rectangle(image, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
+        cv::putText(image, std::to_string(boxes[i].id), cv::Point(boxes[i].x+boxes[i].w-boxes[i].w/2, boxes[i].y), 1, 1, cv::Scalar(0,255,255), 2);
     }
 
     VideoLab[index]->setPixmap(QPixmap::fromImage(Mat2QImage(image).scaled(490,320)));

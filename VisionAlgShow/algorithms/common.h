@@ -15,6 +15,7 @@ struct BoundingBox
     float confidence;  // score of the box
     int frame;  // index of off-line video
     time_t time;  // time stamp of online video
+    int id;
 };
 
 struct Track

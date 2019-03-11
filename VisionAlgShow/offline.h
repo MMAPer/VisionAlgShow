@@ -17,6 +17,7 @@
 #include "opencv2/opencv.hpp"
 #include <QLabel>
 #include "algorithms/yolov2.h"
+#include "tracker/IOU/iou.h"
 
 
 
@@ -50,6 +51,7 @@ public:
     QString fileSuffix;
 
     YOLO_V2 *yoloDetector;
+    IOUTracker *iouTracker;
     //cv::cuda::GpuMat g_frame;
     //cv::Ptr<cv::cudacodec::VideoReader> g_reader;
 
