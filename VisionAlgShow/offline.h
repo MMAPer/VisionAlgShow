@@ -2,22 +2,47 @@
 #define OFFLINE_H
 
 #include <QDialog>
-#include "public.h"
-#include <QDialog>
+#include <QMenu>
+#include <QTimer>
 #include <QList>
 #include <QComboBox>
 #include <QModelIndex>
+#include <QAction>
+#include <QString>
+#include <QDesktopWidget>
+#include <QFileDialog>
+#include <QDebug>
+#include <QMessageBox>
+#include <QStandardItem>
+#include <QLabel>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/dnn.hpp>
+#include <opencv2/dnn/all_layers.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/dnn/shape_utils.hpp>
+#include <opencv2/dpm.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/video/background_segm.hpp>
+//#include<opencv2/cudaimgproc.hpp>
+//#include <opencv2/cudacodec.hpp>
+
 #include <vector>
 #include <string>
+#include <iostream>
+#include <time.h>
+
+#include "public.h"
 #include "camera/devicedata.h"
 #include "camera/channeldata.h"
 #include "camera/treeitem.h"
 #include "camera/treemodel.h"
-#include "realplay.h"
-#include "opencv2/opencv.hpp"
-#include <QLabel>
 #include "algorithms/yolov2.h"
-#include "tracker/IOU/iou.h"
+#include "algorithms/mot/IOU/iou.h"
+#include "utils/iconhelper.h"
+#include "utils/myapp.h"
+#include "algorithms/detect.h"
 
 
 
@@ -32,21 +57,7 @@ class offline : public QDialog
 public:
     explicit offline(QWidget *parent = 0);
     ~offline();
-    int m_gsdkinit;  //sdk是否初始化标志
-    int m_bislogin = FALSE;  //是否登录
-    int m_iposttreelevel;  //点击的树节点的层级
-    RealPlay *m_realplay;  //中间的播放窗口RealPlay
-    TreeModel *m_gmodel;  //自定义数据类型
-    QModelIndex m_qtreemodelindex;  //树点击的索引
-    QList<DeviceData> m_qlistdevicedata;  //DeviceData链表
-    int m_gcurrentuserid;  //当前登录的用户ID
-    int m_guseridbackup;  //用户ID备份
-    NET_DVR_DEVICEINFO_V30 m_gcurrentdeviceinfo;  //海康官方返回的设备信息，注意设备和通道的区别
-    int m_gcurrentchannelnum;  //当前通道
-    int m_gchannelnumbackup;  //当前通道备份，用于作比较的
-    int m_gcurrentchannellinkmode;  //通道链接模式
-    int m_rpwindownumindex;  //窗口数量选择按钮的索引
-    int videoFlag=0;
+    int videoFlag=0;  //0:image  1:video
     QString filePath;
     QString fileSuffix;
 
@@ -111,11 +122,7 @@ private:
     QMenu *offlineMenu; //鼠标右键菜单
 
     void selectScreen(QImage im,int sc);
-    int screenCount=0;
-
-
-
-
+    int screenCount=0;  // 多屏播放时指定是哪块屏
 };
 
 #endif // OFFLINE_H

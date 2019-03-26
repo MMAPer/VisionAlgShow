@@ -1,29 +1,6 @@
 #include "offline.h"
 #include "ui_offline.h"
-#include "utils/iconhelper.h"
-#include "utils/myapp.h"
-#include "QMenu"
-#include "QAction"
-#include "QString"
-#include <QDesktopWidget>
-#include "QFileDialog"
-#include "QDebug"
-#include "QMessageBox"
-#include "QStandardItem"
-#include "opencv2/opencv.hpp"
-#include <opencv2/dnn.hpp>
-#include <opencv2/dnn/all_layers.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/dnn/shape_utils.hpp>
-#include <opencv2/dpm.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/video/background_segm.hpp>
-//#include <opencv2/cudacodec.hpp>
-#include <iostream>
-#include <time.h>
-//#include<opencv2/cudaimgproc.hpp>
-#include <algorithms/detect.h>
+
 using namespace cv;
 using namespace dnn;
 using namespace std;
@@ -49,30 +26,25 @@ offline::~offline()
 
 void offline::od_alg_yolo()
 {
-    yoloDetector = new YOLO_V2("/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.cfg", "/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.weights");
+//    yoloDetector = new YOLO_V2("/home/mmap/work/VisionAlgShow/models/detection/yolo/yolo_v3.cfg","/home/mmap/work/VisionAlgShow/models/detection/yolo/yolov3.weights");
+    yoloDetector = new YOLO_V2();
     iouTracker = new IOUTracker();
     if(videoFlag==1)
     {
         timer->stop();
         disconnect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
         connect(timer, SIGNAL(timeout()), this, SLOT(playYoloV2Detect()));
-        timer->setInterval(1000/25);   //set timer match with FPS
-        //qDebug("screenCount:%d", screenCount);
+        timer->setInterval(1000/20);   //set timer match with FPS
         timer->start();
     }
-
     else
     {
-
        Mat yoloImage;
        String yoloImagePath=filePath.toStdString();
        yoloImage=imread(yoloImagePath);
-
        if (yoloImage.channels() == 4)
        cvtColor(yoloImage, yoloImage, COLOR_BGRA2BGR);
-
-
-       vector<BoundingBox> boxes = yoloDetector->Detect_yolov2(yoloImage);
+       vector<BoundingBox> boxes = yoloDetector->detect(yoloImage);
        for (int i = 0; i < boxes.size(); i++) {
            int x = (int) boxes[i].x;
            int y = (int) boxes[i].y;
@@ -80,13 +52,9 @@ void offline::od_alg_yolo()
            int h = (int) boxes[i].h;
            cv::rectangle(yoloImage, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
        }
-
        QImage yoloQImage=offline::Mat2QImage(yoloImage);
        selectScreen(yoloQImage,screenCount-1);
-       //ui->labelVideo4->setPixmap(QPixmap::fromImage(yoloQImage));
-       //ui->labelVideo4->setAlignment(Qt::AlignCenter);
     }
-
 }
 
 void offline::playYoloV2Detect()
@@ -106,16 +74,15 @@ void offline::playYoloV2Detect()
     if (yoloFrame.channels() == 4)
         cvtColor(yoloFrame, yoloFrame, COLOR_BGRA2BGR);
 
-    vector<BoundingBox> boxes = yoloDetector->Detect_yolov2(yoloFrame);
-    if(boxes.size()!=0)
-        iouTracker->track_iou(boxes);
-    for (int i = 0; i < boxes.size(); i++) {
-        int x = (int) boxes[i].x;
-        int y = (int) boxes[i].y;
-        int w = (int) boxes[i].w;
-        int h = (int) boxes[i].h;
+    vector<BoundingBox> boxes = yoloDetector->detect(yoloFrame);
+    vector<BoundingBox> outputs = iouTracker->track_iou(boxes);
+    for (int i = 0; i < outputs.size(); i++) {
+        int x = (int) outputs[i].x;
+        int y = (int) outputs[i].y;
+        int w = (int) outputs[i].w;
+        int h = (int) outputs[i].h;
         cv::rectangle(yoloFrame, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
-        cv::putText(yoloFrame, std::to_string(boxes[i].id), cv::Point(boxes[i].x+boxes[i].w-boxes[i].w/2, boxes[i].y), 1, 2, cv::Scalar(0,255,255), 2);
+        cv::putText(yoloFrame, std::to_string(outputs[i].id), cv::Point(outputs[i].x+outputs[i].w-outputs[i].w/2, outputs[i].y), 1, 2, cv::Scalar(0,255,255), 2);
     }
 
     QImage yoloQImage=offline::Mat2QImage(yoloFrame);
@@ -132,9 +99,6 @@ void offline::InitStyle()
 //                         Qt::WindowSystemMenuHint |
 //                         Qt::WindowMinMaxButtonsHint);
     this->setWindowFlags(Qt::Widget);
-
-    //IconHelper::Instance()->SetIcon(ui->label_ico, QChar(0xf03d), 11);
-    //ui->label_title->setText("本地视频文件处理");
     this->setWindowTitle("本地视频文件处理");
 
     //背景建模
@@ -145,7 +109,7 @@ void offline::InitStyle()
 
     //目标检测
     cbox_od = ui->cbox_od;
-    string str_od[] = {"行人检测", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO", "SSD"};
+    string str_od[] = {"行人检测", "HOG+SVM", "DPM", "Faster R-CNN", "YOLO_V2", "SSD"};
     vector<string> alg_od(str_od, str_od+6);
     addCboxItem(cbox_od, alg_od);
 
@@ -160,10 +124,6 @@ void offline::InitStyle()
     string str_sm[] = {"行人解析"};
     vector<string> alg_sm(str_sm, str_sm+1);
     addCboxItem(cbox_sm, alg_sm);
-
-    //ui->label_play->setStyleSheet("border: 1px solid #000000;");
-
-
 }
 
 void addCboxItem(QComboBox *target, vector<string> items)
@@ -178,12 +138,6 @@ void offline::InitEvent()
 {
     connect(cbox_bg, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(bgSubtraction()));
     connect(cbox_od, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(od_alg_clicked(const  QString &)));
-
-    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_hog()));
-    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_dpm()));
-    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_faster_rcnn()));
-    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_ssd()));
-    //connect(this,SIGNAL(od_alg_clicked(const QString od_alg)),this,SLOT(od_alg_yolo()));
 }
 
 //init the offline play lab
@@ -236,7 +190,6 @@ void offline::show_video_1()
     change_video_1();
     offlineWindowNum=1;
 }
-
 void offline::change_video_1(int index)
 {
     for (int i = (index + 0); i < (index + 1) ; i++)
@@ -245,7 +198,6 @@ void offline::change_video_1(int index)
         offlineVideoLabel[i]->setVisible(true);
     }
 }
-
 void offline::show_video_4()
 {
     removeLayout();
@@ -253,7 +205,6 @@ void offline::show_video_4()
     change_video_4();
     offlineWindowNum=4;
 }
-
 void offline::change_video_4(int index)
 {
     for (int i = (index + 0); i < (index + 2); i++) {
@@ -303,9 +254,8 @@ void offline::od_alg_clicked(const QString od_alg)
     {
         emit offline::od_alg_ssd();
     }
-    else if(od_alg=="YOLO")
+    else if(od_alg=="YOLO_V2")
     {
-        //QMessageBox::information(this, QString::fromLocal8Bit("警告"),QString::fromLocal8Bit("yolo"));
         emit offline::od_alg_yolo();
     }
 }
@@ -320,31 +270,23 @@ void offline::on_btn_open_clicked()
         if (capture.isOpened())
         {
             capture.release();     //decide if capture is already opened; if so,close it
-            //filePath = "";
+            filePath = "";
         }
-            filePath =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
-
-            ui->text_dir->setText(filePath);
-
-
-            QFileInfo fileInfo=QFileInfo(filePath);
-            fileSuffix=fileInfo.suffix();
-            //ui->text_dir->setText(fileSuffix);
-            if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" )
-            {
-                videoFlag = 0;
-                //static const int kInpWidth = 960;
-                //static const int kInpHeight = 576;
-                cv::Mat image = cv::imread(filePath.toStdString());
-                //cv::resize(image, image, Size(480, 290));
-                QImage img = offline::Mat2QImage(image);
-                selectScreen(img,screenCount);
-                screenCount++;
-                //ui->labelVideo1->setPixmap(QPixmap::fromImage(img));
-                //ui->labelVideo1->setAlignment(Qt::AlignCenter);
-                //ui->label_play->setAlignment(Qt::AlignVCenter);
-
-            }
+        filePath =QFileDialog::getOpenFileName(NULL,tr("选择文件"),".",tr("Image or Video Files(*.jpg *.png *.JPEG *.avi *.mp4 *.flv *.mkv)"));
+        ui->text_dir->setText(filePath);
+        QFileInfo fileInfo=QFileInfo(filePath);
+        fileSuffix=fileInfo.suffix();
+        if(fileSuffix == "jpg" || fileSuffix == "png" || fileSuffix == "JPEG" )
+        {
+            videoFlag = 0;
+            //static const int kInpWidth = 960;
+            //static const int kInpHeight = 580;
+            cv::Mat image = cv::imread(filePath.toStdString());
+            //cv::resize(image, image, Size(480, 290));
+            QImage img = offline::Mat2QImage(image);
+            selectScreen(img,screenCount);
+            screenCount++;
+        }
             else
             {
                 videoFlag = 1;
@@ -356,16 +298,12 @@ void offline::on_btn_open_clicked()
                 //rate = 30;
                 if (capture.isOpened())
                 {
-                    rate= capture.get(CV_CAP_PROP_FPS);
+                    rate= capture.get(CAP_PROP_FPS);
                     capture >> frame;
                     if (!frame.empty())
                     {
                         image = Mat2QImage(frame);
                         selectScreen(image,screenCount++);
-                        //qDebug("screenCount:%d", screenCount);
-
-                        //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
-                        //ui->labelVideo1->setAlignment(Qt::AlignCenter);
                         timer = new QTimer(this);
                         timer->setInterval(1000/rate);   //set timer match with FPS
                         connect(timer, SIGNAL(timeout()), this, SLOT(playbyframe()));
@@ -388,15 +326,11 @@ void offline::on_btn_open_clicked()
 void offline::playbyframe()
 {
     capture >> frame;
-        if (!frame.empty())
-        {
-            image = Mat2QImage(frame);
-            //qDebug("screenCount2:%d", screenCount);
-
-            selectScreen(image,screenCount-1);
-            //ui->labelVideo1->setPixmap(QPixmap::fromImage(image));
-            //this->update();
-        }
+    if (!frame.empty())
+    {
+        image = Mat2QImage(frame);
+        selectScreen(image,screenCount-1);
+    }
 }
 
 // opencv Mat to Image
@@ -406,7 +340,7 @@ QImage offline::Mat2QImage(cv::Mat cvImg)
     if(cvImg.channels()==3)                             //3 channels color image
     {
 
-        cv::cvtColor(cvImg,cvImg,CV_BGR2RGB);
+        cv::cvtColor(cvImg,cvImg,COLOR_BGR2RGB);
         qImg =QImage((const unsigned char*)(cvImg.data),
                     cvImg.cols, cvImg.rows,
                     cvImg.cols*cvImg.channels(),
@@ -434,20 +368,18 @@ QImage offline::Mat2QImage(cv::Mat cvImg)
 void offline::selectScreen(QImage im,int sc)
 {
     //判断单屏还是多屏
-    if(myApp::VideoType == "4")
+    if(offlineWindowNum == 4)
     {
-        //offlineVideoLabel[sc]->resize(QSize(480,290));
         offlineVideoLabel[0]->setPixmap(QPixmap::fromImage(im.scaled(480,290)));
-            //screenCount++;
-
     }
     else
     {
-        offlineVideoLabel[0]->setPixmap(QPixmap::fromImage(im));
+        offlineVideoLabel[0]->setPixmap(QPixmap::fromImage(im.scaled(960,580)));
         offlineVideoLabel[0]->setAlignment(Qt::AlignCenter);
     }
 
 }
+
 void offline::bgSubtraction()
 {
     if (videoFlag==1)
@@ -573,7 +505,7 @@ void offline::od_alg_faster_rcnn()
         vector<BoundingBox> bbox ;
         String imgPath = filePath.toStdString();
         Mat img = imread(imgPath);
-        fasterRCNNDetector->detect(img,bbox);
+        bbox = fasterRCNNDetector->detect(img);
 
         // Draw detections.
         for (size_t i = 0; i < bbox.size(); i++){
@@ -655,8 +587,6 @@ void offline::od_alg_faster_rcnn()
 //        }
 //    }
 }
-
-
 
 void offline::od_alg_ssd()
 {

@@ -28,10 +28,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         visionalgmain.cpp \
-    realplay.cpp \
-    frameplaywnd.cpp \
     offline.cpp \
-    tracking.cpp \
     camera/camera.cpp \
     camera/channeldata.cpp \
     camera/devicedata.cpp \
@@ -40,15 +37,15 @@ SOURCES += main.cpp\
     utils/iconhelper.cpp \
     utils/myapp.cpp \
     algorithms/detect.cpp \
-    tracker/IOU/iou.cpp \
     algorithms/common.cpp \
-    algorithms/yolov2.cpp
+    algorithms/yolov2.cpp \
+    algorithms/face/mtcnn_opencv.cpp \
+    algorithms/mot/IOU/iou.cpp \
+    algorithms/mot/SORT/KalmanTracker.cpp \
+    algorithms/mot/SORT/Hungarian.cpp
 
 HEADERS  += visionalgmain.h \
-    realplay.h \
-    frameplaywnd.h \
     offline.h \
-    tracking.h \
     camera/camera.h \
     camera/channeldata.h \
     camera/devicedata.h \
@@ -60,15 +57,16 @@ HEADERS  += visionalgmain.h \
     utils/parsehelper.h \
     algorithms/detect.h \
     public.h \
-    tracker/IOU/iou.h \
     algorithms/common.h \
-    algorithms/yolov2.h
+    algorithms/yolov2.h \
+    algorithms/face/mtcnn.h \
+    algorithms/mot/IOU/iou.h \
+    algorithms/face/mropencv.h \
+    algorithms/mot/SORT/Hungarian.h \
+    algorithms/mot/SORT/KalmanTracker.h
 
 FORMS    += visionalgmain.ui \
-    realplay.ui \
-    frameplaywnd.ui \
-    offline.ui \
-    tracking.ui
+    offline.ui
 
 win32:{
 RC_FILE=main.rc
@@ -85,11 +83,11 @@ RESOURCES += \
 INCLUDEPATH += ../linux64/incCn
 LIBS += -L../linux64/lib/ -Wl,-rpath=./:./HCNetSDKCom:../linux64/lib -lhcnetsdk -lPlayCtrl -lAudioRender -lSuperRender
 
-#OpenCV3.4.1
-INCLUDEPATH += /usr/local/opencv3.4.1/include \
-               /usr/local/opencv3.4.1/include/opencv \
-               /usr/local/opencv3.4.1/include/opencv2
-LIBS += /usr/local/opencv3.4.1/lib/libopencv_*.so
+#OpenCV4.0.0
+INCLUDEPATH += /usr/local/opencv4/include/opencv4 \
+               /usr/local/opencv4/include/opencv4/opencv \
+               /usr/local/opencv4/include/opencv4/opencv2
+LIBS += /usr/local/opencv4/lib/libopencv_*.so
 
 
 

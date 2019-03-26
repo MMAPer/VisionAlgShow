@@ -23,7 +23,7 @@ public:
     std::vector<Track> finished_tracks;
 
     // start IOU Tracker
-    int track_iou(std::vector<BoundingBox> &detections);
+    std::vector<BoundingBox> track_iou(std::vector<BoundingBox> &detections);
 
 private:
     // return the iou between two boxes

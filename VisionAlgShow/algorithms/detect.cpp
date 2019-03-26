@@ -10,10 +10,12 @@ int FasterRCNNDetector::loadNet(){
     }
 }
 
-void FasterRCNNDetector::detect(Mat &img, vector<BoundingBox> &bbox){
 
+vector<BoundingBox> FasterRCNNDetector::detect(const cv::Mat& img){
+
+    vector<BoundingBox> bbox;
     float confThreshold = 0.8;
-    CV_Assert(!protoPath.empty(), !modelPath.empty());
+//    CV_Assert(!protoPath.empty(), !modelPath.empty());
     Mat blob = blobFromImage(img, 1.0, Size(), Scalar(102.9801, 115.9465, 122.7717), false, false);
     Mat imInfo = (Mat_<float>(1, 3) << img.rows, img.cols, 1.6f);
     net.setInput(blob, "data");
@@ -42,7 +44,7 @@ void FasterRCNNDetector::detect(Mat &img, vector<BoundingBox> &bbox){
             bbox[i].confidence = confidence;
         }
     }
-
+    return bbox;
 }
 
 int SSDDetector::loadNet(){
@@ -55,25 +57,10 @@ int SSDDetector::loadNet(){
     }
 }
 
-void SSDDetector::detect(Mat &img, vector<BoundingBox> &bbox){
 
-
-
+vector<BoundingBox> SSDDetector::detect(const cv::Mat& img){
+    vector<BoundingBox> bbox;
+    return bbox;
 }
 
-int YOLODetector::loadNet()
-{
-    net = readNetFromDarknet(cfgPath, modelPath);
-    if(net.empty())
-    {
-        return -1;
-    }else{
-        return 0;
-    }
-}
 
-void YOLODetector::detect(Mat &img, vector<BoundingBox> &bbox)
-{
-
-
-}

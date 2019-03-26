@@ -1,9 +1,22 @@
 #include "yolov2.h"
 #include "time.h"
 
-
-// "../../models/detection/yolo/yolov2-tiny.cfg"   "../../models/detection/yolo/yolov2-tiny.weights"
 YOLO_V2::YOLO_V2(const string& cfgPath, const string& modelPath) {
+    yolov2_net = readNetFromDarknet(cfgPath, modelPath);
+    if(yolov2_net.empty())
+    {
+        cout << "yolo_v2 network load error!" << endl;
+    }
+    else
+    {
+        cout << "yolo_v2 network load success!" << endl;
+    }
+}
+
+YOLO_V2::YOLO_V2()
+{
+    const string cfgPath = "/home/mmap/work/VisionAlgShow/models/detection/yolo/yolov2-tiny.cfg";
+    const string modelPath = "/home/mmap/work/VisionAlgShow/models/detection/yolo/yolov2-tiny.weights";
     yolov2_net = readNetFromDarknet(cfgPath, modelPath);
     if(yolov2_net.empty())
     {
@@ -20,7 +33,7 @@ String classNames ="../../models/detection/yolo/coco.names";
 String object_roi_style = "box";   // box or line style draw
 float confidenceThreshold = 0.24;
 
-vector<BoundingBox> YOLO_V2::Detect_yolov2(const Mat &img)
+vector<BoundingBox> YOLO_V2::detect(const Mat &img)
 {
     vector<BoundingBox> boxes;
     vector<String> classNamesVec;
@@ -51,7 +64,7 @@ vector<BoundingBox> YOLO_V2::Detect_yolov2(const Mat &img)
      vector<double> layersTimings;
     double tick_freq = getTickFrequency();
     double time_ms = yolov2_net.getPerfProfile(layersTimings) / tick_freq * 1000;
-    std::cout << "speed:" << 1000.f / time_ms << std::endl;
+    std::cout << "speed:" << 1000.f / time_ms << "fps" << std::endl;
 
 
     //float confidenceThreshold = parser.get<float>("min_confidence");

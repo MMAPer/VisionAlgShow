@@ -13,6 +13,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/video/background_segm.hpp>
 #include <vector>
+#include "detect.h"
 
 
 using namespace std;
@@ -21,11 +22,12 @@ using namespace dnn;
 using namespace cv::dnn;
 
 
-class YOLO_V2
+class YOLO_V2 : public Detector
 {
 public:
+    YOLO_V2();
     YOLO_V2(const string& cfgPath, const string& modelPath);
-    vector<BoundingBox> Detect_yolov2(const cv::Mat& img);
+    vector<BoundingBox> detect(const cv::Mat& img) override;
 
 public:
     dnn::Net yolov2_net;

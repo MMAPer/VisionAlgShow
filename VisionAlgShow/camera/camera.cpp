@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include "opencv2/imgproc/imgproc_c.h"
 
 
 #define USECOLOR 1
@@ -47,7 +48,7 @@ pthread_mutex_t g_cs_frameList[4];
 list<Mat> g_frameList_1, g_frameList_2, g_frameList_3, g_frameList_4;
 LONG lUserID;
 NET_DVR_AES_KEY_INFO keyInfo;  //新版SDK取设备详细的IP资源信息
-LONG lRealPlayHandle = -1;
+LONG lRealPlayHandle[4] = {-1};
 char *aesKey;
 
 
@@ -225,9 +226,8 @@ void * ReadCamera1(void* IpParameter)
     ClientInfo.hPlayWnd = NULL; //窗口为空，设备SDK不解码只取流
     ClientInfo.lLinkMode = 1; //Main Stream
     ClientInfo.sMultiCastIP = NULL;
-    LONG lRealPlayHandle;
-    lRealPlayHandle = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack1, NULL, TRUE);
-    if (lRealPlayHandle<0)
+    lRealPlayHandle[0] = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack1, NULL, TRUE);
+    if (lRealPlayHandle[0]<0)
     {
         printf("NET_DVR_RealPlay_V30 failed! Error number: %d\n", NET_DVR_GetLastError());
         //return -1;
@@ -238,7 +238,7 @@ void * ReadCamera1(void* IpParameter)
     //fclose(fp);
     //---------------------------------------
     //关闭预览
-    if (!NET_DVR_StopRealPlay(lRealPlayHandle))
+    if (!NET_DVR_StopRealPlay(lRealPlayHandle[0]))
     {
         printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
         return 0;
@@ -363,9 +363,8 @@ void * ReadCamera2(void* IpParameter)
     ClientInfo.hPlayWnd = NULL; //窗口为空，设备SDK不解码只取流
     ClientInfo.lLinkMode = 1; //Main Stream
     ClientInfo.sMultiCastIP = NULL;
-    LONG lRealPlayHandle;
-    lRealPlayHandle = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack2, NULL, TRUE);
-    if (lRealPlayHandle<0)
+    lRealPlayHandle[1] = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack2, NULL, TRUE);
+    if (lRealPlayHandle[1]<0)
     {
         printf("NET_DVR_RealPlay_V30 failed! Error number: %d\n", NET_DVR_GetLastError());
         //return -1;
@@ -376,7 +375,7 @@ void * ReadCamera2(void* IpParameter)
     //fclose(fp);
     //---------------------------------------
     //关闭预览
-    if (!NET_DVR_StopRealPlay(lRealPlayHandle))
+    if (!NET_DVR_StopRealPlay(lRealPlayHandle[1]))
     {
         printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
         return 0;
@@ -502,9 +501,8 @@ void * ReadCamera3(void* IpParameter)
     ClientInfo.hPlayWnd = NULL; //窗口为空，设备SDK不解码只取流
     ClientInfo.lLinkMode = 1; //Main Stream
     ClientInfo.sMultiCastIP = NULL;
-    LONG lRealPlayHandle;
-    lRealPlayHandle = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack3, NULL, TRUE);
-    if (lRealPlayHandle<0)
+    lRealPlayHandle[2] = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack3, NULL, TRUE);
+    if (lRealPlayHandle[2]<0)
     {
         printf("NET_DVR_RealPlay_V30 failed! Error number: %d\n", NET_DVR_GetLastError());
         //return -1;
@@ -515,7 +513,7 @@ void * ReadCamera3(void* IpParameter)
     //fclose(fp);
     //---------------------------------------
     //关闭预览
-    if (!NET_DVR_StopRealPlay(lRealPlayHandle))
+    if (!NET_DVR_StopRealPlay(lRealPlayHandle[2]))
     {
         printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
         return 0;
@@ -638,9 +636,8 @@ void * ReadCamera4(void* IpParameter)
     ClientInfo.hPlayWnd = NULL; //窗口为空，设备SDK不解码只取流
     ClientInfo.lLinkMode = 1; //Main Stream
     ClientInfo.sMultiCastIP = NULL;
-    LONG lRealPlayHandle;
-    lRealPlayHandle = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack4, NULL, TRUE);
-    if (lRealPlayHandle<0)
+    lRealPlayHandle[3] = NET_DVR_RealPlay_V30(lUserID, &ClientInfo, fRealDataCallBack4, NULL, TRUE);
+    if (lRealPlayHandle[3]<0)
     {
         printf("NET_DVR_RealPlay_V30 failed! Error number: %d\n", NET_DVR_GetLastError());
     }
@@ -648,7 +645,7 @@ void * ReadCamera4(void* IpParameter)
         cout << "码流回调成功！" << endl;
     sleep(-1);
     //关闭预览
-    if (!NET_DVR_StopRealPlay(lRealPlayHandle))
+    if (!NET_DVR_StopRealPlay(lRealPlayHandle[3]))
     {
         printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
         return 0;
@@ -694,22 +691,38 @@ void Camera::pauseOneChannel(int windowNo)
     {
     case 0:
         pthread_mutex_unlock(&g_cs_frameList[0]);
-        pthread_cancel(hThread1);
+        if (!NET_DVR_StopRealPlay(lRealPlayHandle[0]))
+        {
+            printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
+        }
+        close(hThread1);
         pthread_join(hThread1, (void**)&p);
         printf("thread exit code %d\n", status);
         break;
     case 1:
         pthread_mutex_unlock(&g_cs_frameList[1]);
+        if (!NET_DVR_StopRealPlay(lRealPlayHandle[1]))
+        {
+            printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
+        }
         pthread_cancel(hThread2);
         pthread_join(hThread2, (void**)&p);
         break;
     case 2:
         pthread_mutex_unlock(&g_cs_frameList[2]);
+        if (!NET_DVR_StopRealPlay(lRealPlayHandle[2]))
+        {
+            printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
+        }
         pthread_cancel(hThread3);
         pthread_join(hThread3, (void**)&p);
         break;
     case 3:
         pthread_mutex_unlock(&g_cs_frameList[3]);
+        if (!NET_DVR_StopRealPlay(lRealPlayHandle[3]))
+        {
+            printf("NET_DVR_StopRealPlay error! Error number: %d\n", NET_DVR_GetLastError());
+        }
         pthread_cancel(hThread4);
         pthread_join(hThread4, (void**)&p);
         break;

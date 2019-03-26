@@ -4,7 +4,6 @@
 #include "utils/myapp.h"
 #include "camera/camera.h"
 #include "offline.h"
-#include "tracking.h"
 #include <QDesktopWidget>
 #include <opencv2/opencv.hpp>
 #include <QSize>
@@ -31,8 +30,8 @@ VisionAlgMain::VisionAlgMain(QWidget *parent) :
     timer2 = new QTimer();
     timer3 = new QTimer();
     timer4 = new QTimer();
-    yoloDetector = new YOLO_V2("/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.cfg", "/home/mmap/work/HCNetTest/models/detection/yolo/yolov2-tiny.weights");
-    iouTracker = new IOUTracker();
+    yoloDetector = new YOLO_V2();
+//    iouTracker = new IOUTracker();
 
     this->InitCamera();  //初始化SDK
     this->InitData();
@@ -51,7 +50,7 @@ QImage Mat2QImage(cv::Mat cvImg)
     QImage qImg;
     if(cvImg.channels()==3)                             //3 channels color image
     {
-        cv::cvtColor(cvImg,cvImg,CV_BGR2RGB);
+        cv::cvtColor(cvImg,cvImg,COLOR_BGR2RGB);
         qImg =QImage((const unsigned char*)(cvImg.data),
                     cvImg.cols, cvImg.rows,
                     cvImg.cols*cvImg.channels(),
@@ -210,6 +209,7 @@ void VisionAlgMain::InitVideo()
     menu->addAction("切换到16画面", this, SLOT(show_video_16()));
     tempLab = VideoLab[0];
     show_video_4();
+//    std::cout << tempLab->size().height() << std::endl;
 }
 
 
@@ -242,17 +242,21 @@ void VisionAlgMain::playTimer()
     Mat image = camera->getFrame(index);
     cv::resize(image, image, cv::Size(490, 320), (0, 0), (0, 0), cv::INTER_LINEAR);
 
-    vector<BoundingBox> boxes = yoloDetector->Detect_yolov2(image);
-    iouTracker->track_iou(boxes);
+    vector<BoundingBox> boxes = yoloDetector->detect(image);
+//    iouTracker->track_iou(boxes);
     for (int i = 0; i < boxes.size(); i++) {
         int x = (int) boxes[i].x;
         int y = (int) boxes[i].y;
         int w = (int) boxes[i].w;
         int h = (int) boxes[i].h;
         cv::rectangle(image, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
-        cv::putText(image, std::to_string(boxes[i].id), cv::Point(boxes[i].x+boxes[i].w-boxes[i].w/2, boxes[i].y), 1, 1, cv::Scalar(0,255,255), 2);
+//        cv::putText(image, std::to_string(boxes[i].id), cv::Point(boxes[i].x+boxes[i].w-boxes[i].w/2, boxes[i].y), 1, 1, cv::Scalar(0,255,255), 2);
     }
 
+//    QPixmap pixmap = QPixmap::fromImage(Mat2QImage(image));
+//    pixmap.scaled(VideoLab[index]->size(), Qt::KeepAspectRatio);
+//    VideoLab[index]->setScaledContents(true);
+//    VideoLab[index]->setPixmap(pixmap);
     VideoLab[index]->setPixmap(QPixmap::fromImage(Mat2QImage(image).scaled(490,320)));
 }
 
@@ -768,22 +772,14 @@ void VisionAlgMain::systemSetting()
 void VisionAlgMain::offlinehandle()
 {
     myOffline = new offline(ui->widget_show);
-    myOffline->setAttribute(Qt::WA_DeleteOnClose);
+    myOffline->setAttribute(Qt::WA_DeleteOnClose);  //调用close()并不一定就会将窗口对象销毁。而只有设置了 Qt::WA_DeleteOnClose属性才会删除销毁。如果这个属性没有设置，close()的作用和hide（），setvisible（false）一样，只会隐藏窗口对象而已，并不会销毁该对象。
     ui->widget_alg->hide();
     ui->widget_main->hide();
-    //ui->widget_show->hide();
     myOffline->show();
     myOffline->move(0,0);
     connect(ui->btn_onlinehandle, SIGNAL(clicked(bool)), this, SLOT(onlinehandle()));   //在线处理
     ui->btnMenu_Full->blockSignals(true); //禁用全屏
     //connect(ui->btnMenu_Full,&QPushButton::clicked,this,&VisionAlgMain::offline_full);
-    //offline o;
-    //o.setGeometry(qApp->desktop()->availableGeometry());
-    //o.exec();
-    //qDebug()<<"离线处理"<<endl;
-    //tracking t;
-    //t.setGeometry(qApp->desktop()->availableGeometry());
-    //t.exec();
 }
 
 void VisionAlgMain::onlinehandle()

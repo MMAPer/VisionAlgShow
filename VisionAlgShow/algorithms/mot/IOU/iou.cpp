@@ -64,23 +64,24 @@ int IOUTracker::highestIOU(BoundingBox &box, std::vector<BoundingBox> &boxes)
 
 
 // start IOU Tracker
-int IOUTracker::track_iou(std::vector<BoundingBox> &detections)
+std::vector<BoundingBox> IOUTracker::track_iou(std::vector<BoundingBox> &detections)
 {
-    std::vector<BoundingBox> tmp_detections = detections;
-    if(active_tracks.size() == 0)
+    std::vector<BoundingBox> detections_show;
+    if(active_tracks.size() == 0)  //还没有产生任何轨迹
     {
         for(int i=0; i<detections.size(); i++)
         {
-            detections[i].id = max_id+1;
+            detections[i].id = max_id;
             Track track;
             track.boxes.push_back(detections[i]);
-            track.id = max_id+1;
+            detections_show.push_back(detections[i]);
+            track.id = max_id;
             track.max_score = detections[i].confidence;
             track.start_frame = 0;
             active_tracks.push_back(track);
             max_id++;
         }
-        return 0;
+        return detections_show;
     }
 
     for(int i=0; i<active_tracks.size(); i++)
@@ -93,11 +94,14 @@ int IOUTracker::track_iou(std::vector<BoundingBox> &detections)
         {
             detections[index].id = track.id;
             track.boxes.push_back(detections[index]);
+            detections_show.push_back(detections[i]);
             if(track.max_score < detections[index].confidence)
                 track.max_score = detections[index].confidence;
+
             if(track.boxes.size()>10)
                 track.boxes.erase(track.boxes.begin());
-            tmp_detections.erase(tmp_detections.begin()+index);
+
+            detections.erase(detections.begin()+index);
             active_tracks[i] = track;
             updated = true;
         }
@@ -114,23 +118,18 @@ int IOUTracker::track_iou(std::vector<BoundingBox> &detections)
             i--;
         }
     }  //end for active tracks
-    for(auto box:tmp_detections)
+    for(auto box:detections)
     {
         std::vector<BoundingBox> b;
+        box.id = max_id;
         b.push_back(box);
+        detections_show.push_back(box);
         // Track_id is set to 0 because we don't know if the track will "surviv" or not
-        Track t = {b, box.confidence, 0, max_id+1};
-        for(int i=0;i<detections.size();i++)
-        {
-            if(box.x = detections[i].x)
-            {
-                detections[i].id = max_id+1;
-            }
-        }
+        Track t = {b, box.confidence, 0, max_id};
         max_id++;
         active_tracks.push_back(t);
     }
-    return 0;
+    return detections_show;
 }
 
 
