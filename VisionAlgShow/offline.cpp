@@ -82,6 +82,7 @@ void offline::playYoloV2Detect()
         int w = (int) outputs[i].w;
         int h = (int) outputs[i].h;
         cv::rectangle(yoloFrame, cv::Rect(x, y, w, h), cv::Scalar(255, 0, 0), 2);
+        cout << "id = " << outputs[i].id << endl;
         cv::putText(yoloFrame, std::to_string(outputs[i].id), cv::Point(outputs[i].x+outputs[i].w-outputs[i].w/2, outputs[i].y), 1, 2, cv::Scalar(0,255,255), 2);
     }
 

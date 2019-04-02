@@ -3,7 +3,7 @@
 
 * QT5.8.0
 
-* OpenCV3.4.1
+* OpenCV3.4.1【已升级至OpenCV4.0.0】
 
 * CUDA8.0
 
@@ -28,7 +28,7 @@ sudo apt-get install libxvidcore-dev libx264-dev # 处理视频所需的包
 sudo apt-get install libatlas-base-dev gfortran # 优化opencv功能
 sudo apt-get install ffmpeg
 ```
-- 2、下载OpenCV3.4.1
+- 2、下载OpenCV3.4.1【注：为方便使用更新的功能，已升级至OpenCV4.0.0，编译方法一致】
 ```
 wget https://github.com/opencv/opencv/archive/3.4.1.zip 
 wget https://github.com/opencv/opencv_contrib/archive/3.4.1.zip

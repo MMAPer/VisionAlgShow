@@ -64,7 +64,7 @@ vector<BoundingBox> YOLO_V2::detect(const Mat &img)
      vector<double> layersTimings;
     double tick_freq = getTickFrequency();
     double time_ms = yolov2_net.getPerfProfile(layersTimings) / tick_freq * 1000;
-    std::cout << "speed:" << 1000.f / time_ms << "fps" << std::endl;
+//    std::cout << "speed:" << 1000.f / time_ms << "fps" << std::endl;
 
 
     //float confidenceThreshold = parser.get<float>("min_confidence");

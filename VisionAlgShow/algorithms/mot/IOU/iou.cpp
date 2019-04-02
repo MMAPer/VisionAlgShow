@@ -79,6 +79,7 @@ std::vector<BoundingBox> IOUTracker::track_iou(std::vector<BoundingBox> &detecti
             track.max_score = detections[i].confidence;
             track.start_frame = 0;
             active_tracks.push_back(track);
+            std::cout << "init track: " << max_id << std::endl;
             max_id++;
         }
         return detections_show;
@@ -126,6 +127,7 @@ std::vector<BoundingBox> IOUTracker::track_iou(std::vector<BoundingBox> &detecti
         detections_show.push_back(box);
         // Track_id is set to 0 because we don't know if the track will "surviv" or not
         Track t = {b, box.confidence, 0, max_id};
+        std::cout << "new track: " << max_id << std::endl;
         max_id++;
         active_tracks.push_back(t);
     }
